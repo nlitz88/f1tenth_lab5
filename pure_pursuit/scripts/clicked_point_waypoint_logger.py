@@ -29,7 +29,7 @@ class ClickedPointWaypointLogger2D(Node):
             waypoints file will be written to. If not specified, will be written
             to the current/executing user's home directory.
         """
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, node_name="waypoint_logger", **kwargs)
         # Reminder: In a function call, * and ** unpack the data structures into
         # arguments to be passed into the function. In a function definition
         # (def), * and ** are used to indicate that you want all arguments and
@@ -41,16 +41,16 @@ class ClickedPointWaypointLogger2D(Node):
         self.__directory = directory
         if self.__directory == None:
             self.__directory = ClickedPointWaypointLogger2D.__default_directory
-        self.__default_filename = f"{datetime.now()}_waypoints.csv"
+        self.__default_filename = f"{datetime.now()}_waypoints"
 
         # Generate a new, unique file name within the default directory.
         def unique_path(directory: Path, file_name: str, extension: str) -> Path:
-            path = Path(directory, file_name, f".{extension}")
+            path = Path(directory, f"{file_name}.{extension}")
             if path.exists():
                 counter = 1
                 unique_name_found = False
                 while not unique_name_found:
-                    path = Path(directory, file_name, f"_{counter}", f".{extension}")
+                    path = Path(directory, f"{file_name}_{counter}.{extension}")
                     if path.exists():
                         counter += 1
             return path
@@ -65,9 +65,9 @@ class ClickedPointWaypointLogger2D(Node):
         except OSError as exc:
             self.get_logger().error(f"Failed to open file at filepath {self.__waypoints_filepath}")
             raise exc
-        finally:
-            self.get_logger().info(f"Successfully created waypoint logging file {self.__waypoints_filepath}.")
-            self.__csv_writer = csv.writer(csvfile=self.__waypoint_file)
+ 
+        self.get_logger().info(f"Successfully created waypoint logging file {self.__waypoints_filepath}")
+        self.__csv_writer = csv.writer(self.__waypoint_file)
 
         # Create the subscriber that will subscribe to the clicked_point topic.
         self.create_subscription(msg_type=PointStamped,
@@ -85,6 +85,7 @@ class ClickedPointWaypointLogger2D(Node):
             new_waypoint (PointStamped): New waypoint to be recorded.
         """
         self.__csv_writer.writerow([new_waypoint.point.x, new_waypoint.point.y])
+        self.get_logger().info(f"Wrote new 2D waypoint {[new_waypoint.point.x, new_waypoint.point.y]} to file.")
 
     def destroy_node(self) -> bool:
         """Default implementation for destroying node, but also closes the
@@ -97,7 +98,7 @@ class ClickedPointWaypointLogger2D(Node):
 def main(args=None):
     rclpy.init(args=args)
     waypoint_logger = ClickedPointWaypointLogger2D()
-    rclpy.spin()
+    rclpy.spin(waypoint_logger)
     waypoint_logger.destroy_node()
     rclpy.shutdown()
 

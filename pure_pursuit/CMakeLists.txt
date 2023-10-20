@@ -35,24 +35,13 @@ include_directories(
   ${EIGEN3_INCLUDE_DIRS}
 )
 
-# Create Cpp executable
-add_executable(pure_pursuit_node src/pure_pursuit_node.cpp)
-
-ament_target_dependencies(pure_pursuit_node 
-  rclcpp geometry_msgs ackermann_msgs nav_msgs sensor_msgs std_msgs visualization_msgs tf2_ros
-)
-
-# Install Cpp executables
-install(TARGETS
-  pure_pursuit_node
-  DESTINATION lib/${PROJECT_NAME})
-
 # Install Python modules
 ament_python_install_package(${PROJECT_NAME})
 
 # Install Python executables
 install(PROGRAMS
   scripts/pure_pursuit_node.py
+  scripts/clicked_point_waypoint_logger.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
