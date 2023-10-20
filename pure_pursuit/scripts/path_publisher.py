@@ -45,16 +45,16 @@ class PathFilePublisher2D(Node):
             raise exc
         self.get_logger().info(f"Successfully created new Path message from {len(self.__path.poses)} waypoints found in path file {self.__filepath}")
         
-        # Create a timer that will generate interrupts to trigger the publisher.
-        self.create_timer(timer_period_sec=0.1, 
-                          callback=self.__publish_path)
-
         # Create publisher. Will publish at a fixed interval. Additionally, will
         # latch it so that any time a node subscribes, it'll get the latest path
         # published.
         self.__path_publisher = self.create_publisher(msg_type=Path, 
                                                       topic="/path_from_file", 
                                                       qos_profile=10)
+
+        # Create a timer that will generate interrupts to trigger the publisher.
+        self.create_timer(timer_period_sec=0.1, 
+                          callback=self.__publish_path)
 
         # NOTE: technically, because this is being read in from a file, it
         # technically should never need to be republished. However, to simulate
@@ -65,6 +65,7 @@ class PathFilePublisher2D(Node):
         """Publishes the internal copy of the path loaded from file earlier.
         """
         self.__path_publisher.publish(self.__path)
+        self.get_logger().info(f"Published path")
 
 def main(args=None):
     rclpy.init(args=args)
