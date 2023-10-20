@@ -39,7 +39,9 @@ class PathFilePublisher2D(Node):
                         point = Point(x=float(row[0]), y=float(row[1]))
                         pose = Pose(position=point)
                         pose_stamped = PoseStamped(pose=pose)
+                        pose_stamped.header.frame_id = "map"
                         self.__path.poses.append(pose_stamped)
+                        self.__path.header.frame_id = "map"
         except OSError as exc:
             self.get_logger().error(f"Failed to open path file {self.__filepath}")
             raise exc
