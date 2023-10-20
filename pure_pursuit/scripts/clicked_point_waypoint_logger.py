@@ -63,14 +63,21 @@ class ClickedPointWaypointLogger2D(Node):
         try:
             self.__waypoint_file = open(self.__waypoints_filepath, 'w')
         except OSError as exc:
-            print(f"Failed to open file at filepath {self.__waypoints_filepath}")
+            self.get_logger().error(f"Failed to open file at filepath {self.__waypoints_filepath}")
             raise exc
         finally:
+            self.get_logger().info(f"Successfully created waypoint logging file {self.__waypoints_filepath}.")
             self.__csv_writer = csv.writer(csvfile=self.__waypoint_file)
 
-        # 
+        # Create the subscriber that will subscribe to the clicked_point topic.
+        self.create_subscription(msg_type=PointStamped,
+                                 topic="/clicked_point",
+                                 callback=self.__clicked_point_callback,
+                                 qos_profile=10)
 
-    def write_new_waypoint(self, new_waypoint: PointStamped) -> None:
+        self.get_logger().info(f"ClickedPointWaypointLogger2D successfully created.")
+
+    def __clicked_point_callback(self, new_waypoint: PointStamped) -> None:
         """Take the provided waypoint and write it to a new line in the current
         waypoints file.
 
@@ -79,11 +86,20 @@ class ClickedPointWaypointLogger2D(Node):
         """
         self.__csv_writer.writerow([new_waypoint.point.x, new_waypoint.point.y])
 
+    def destroy_node(self) -> bool:
+        """Default implementation for destroying node, but also closes the
+        waypoints file.
+        """
+        self.__waypoint_file.close()
+        self.get_logger().info(f"Waypoint logger saved waypoint file {self.__waypoints_filepath}.")
+        return super().destroy_node()
     
-        
+def main(args=None):
+    rclpy.init(args=args)
+    waypoint_logger = ClickedPointWaypointLogger2D()
+    rclpy.spin()
+    waypoint_logger.destroy_node()
+    rclpy.shutdown()
 
 if __name__ == "__main__":
-    pass
-    # Initialize node.
-    
-    # Make sure to also destroy node when done so file is closed.
+    main()
