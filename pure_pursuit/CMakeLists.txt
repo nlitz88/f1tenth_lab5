@@ -42,7 +42,25 @@ ament_python_install_package(${PROJECT_NAME})
 install(PROGRAMS
   scripts/pure_pursuit_node.py
   scripts/clicked_point_waypoint_logger.py
+  scripts/path_publisher.py
   DESTINATION lib/${PROJECT_NAME}
+)
+
+# Per https://roboticsbackend.com/ros2-yaml-params/#Why_using_YAML_for_ROS2_params
+# Install launch files in share directory.
+install(DIRECTORY
+  launch
+  DESTINATION share/${PROJECT_NAME}
+)
+# Install config files in share directory.
+install(DIRECTORY
+  config
+  DESTINATION share/${PROJECT_NAME}
+)
+# Install path files in share directory.
+install(DIRECTORY
+  path_files
+  DESTINATION share/${PROJECT_NAME}
 )
 
 if(BUILD_TESTING)
