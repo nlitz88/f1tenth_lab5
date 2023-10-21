@@ -19,7 +19,8 @@ def generate_launch_description():
     path_file_publisher_node = Node(
         package="pure_pursuit",
         executable="path_publisher.py",
-        parameters=[params]
+        parameters=[params],
+        remappings="" # TODO: PLACE WHATEVER TOPIC REMAPPING IS NEEDED HERE FOR SIMULATION. REMAP ODOM, ANY OTHERS NEEDED.
     )
     # Add the launch_ros "Node" actions we created.
     # ld.add_action(pure_pursuit_node)

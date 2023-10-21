@@ -24,15 +24,41 @@ class PurePursuit(Node):
                                     ("min_longitudinal_velocity_ms", rclpy.Parameter.Type.DOUBLE)
                                 ])
 
-        # TODO: create ROS subscribers and publishers
+        # TODO: Create transform listener(s). Need one to listen for the
+        # transform from odom to base_link, and then one from map to odom.
+        # Create those transform listeners here. NOTE: There doesn't seem to be
+        # an odom frame in simulation, so may have to have a different node for
+        # the physical robot? OR, could just use some logic from the parameters
+        # that the node is set up with to configure how it is set up.
 
-    # Fundamental Question: What format are points typically provided in? I
-    # actually made this an action item in my notes.
-    # Well, when in the other module I have, I just have a function that loads
-    # them in and turns them into a proper Path message from the nav library.
-    # Could use that here, as that probably is the best, most feature reach
-    # collection of values.
+        # NOTE: Maybe for the simulation, the bridge node's /ego_racecar/pose
+        # messages simulate the pose that we'd get by using a particle filter
+        # and computing the corrected pose using the map-->odom +
+        # odom-->base_link transforms manually. SO, if that's true, for
+        # simulation, only need to subscribe to the /ego_racecar/pose topic.
 
+        # WELL, maybe rather than subscribing to the pose message, we can use a
+        # function "get_pose" that 
+        # a.) For simulation, just subscribes to whatever topic publishes the
+        # pose.
+        # b.) for the real robot, just 
+        
+        # For simulation (and the real robot as well), I think the TF library
+        # completely simplifies this whole process. Why? Because we are just
+        # asking it to "give us the transform from the map frame to the base
+        # link frame." We don't care if there's an odom frame between those two
+        # frames or not--that's up to TF2 to know what the transform tree looks
+        # like!
+
+        # Therefore, we can just ask for that transform in all contexts, and TF
+        # will figure out how to get us there.
+
+        # AND, in this specific case, asking for the transform from map to base
+        # link means we'll be taking the odometry generated odom-->base_link
+        # transformation (the "continuous" (high frequency)) odometry estimated
+        # position and adding the localization-determined offset to its
+        # accurate/real position. This gives us that continuously updated,
+        # smooth, yet periodically corrected position that we want. This is our pose!
 
     def get_next_target_point(self, current_pose: PoseStamped, path: Path) -> Pose:
         """Function that will take the robot's current pose in the map frame and
