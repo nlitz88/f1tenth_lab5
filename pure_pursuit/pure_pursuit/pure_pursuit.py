@@ -86,11 +86,21 @@ class PurePursuit(Node):
         self.__transform_listener = TransformListener(buffer=self.__transform_buffer, node=self)
 
         # Temporary pose publisher.
-        self.__pose_publisher_timer = self.create_timer(timer_period_sec=0.1, callback=self.__temp_check_pose_callback)
-        self.pose_publisher = self.create_publisher(msg_type=PoseStamped, topic="/pose_from_transform", qos_profile=10)
+        self.__control_timer = self.create_timer(timer_period_sec=0.1, callback=self.__control_callback)
+        # NOTE: Not sure if this is really appropriate--is it this node's
+        # responsibility to be publishing the car's pose? Doesn't feel like it.
+        self.__pose_publisher = self.create_publisher(msg_type=PoseStamped, topic="/ego_racecar/pose", qos_profile=10)
 
     def __get_car_pose(self) -> PoseStamped:
+        """Gets the car's pose in the map frame.
 
+        Raises:
+            exc: Raises Exception if it fails to obtain the transformations that
+            are needed to compute the pose.
+
+        Returns:
+            PoseStamped: Timestamped Pose of the car.
+        """
 
         # First, try to obtain transform from map frame to car frame. This is
         # effectively the bose of the robot, as the robot start's at the origin
@@ -102,7 +112,6 @@ class PurePursuit(Node):
         except Exception as exc:
             self.get_logger().warning(f"Failed to obtain transformation from {self.__map_frame} frame to {self.__car_frame} frame needed to determine car pose.")
             raise exc
-        
         # Now, create PoseStamped object from transform.
         new_pose = PoseStamped()
         new_pose.header.frame_id = transform.header.frame_id
@@ -118,17 +127,6 @@ class PurePursuit(Node):
         new_pose.pose.orientation.w = transform.transform.rotation.w
         # BEFORE MOVING AHEAD WITH THIS, TRY TO VERIFY THE LOGIC INTUITIVELY.
         return new_pose
-    
-    def __temp_check_pose_callback(self) -> None:
-        
-        # Create a pose publisher.
-        try:
-            car_pose = self.__get_car_pose()
-        except Exception as exc:
-            self.get_logger().warning(f"Failed to obtain car's pose from transform")
-        else:
-            self.pose_publisher.publish(car_pose)
-            self.get_logger().info(f"Successfully published car's pose.")
 
     def get_next_target_point(self, current_pose: PoseStamped, path: Path) -> Pose:
         """Function that will take the robot's current pose in the map frame and
@@ -163,6 +161,8 @@ class PurePursuit(Node):
         # Maybe this function would subscribe to tf? Need to identify the normal
         # way to accomplish this part. Do you subscribe asynchronously? Or do
         # you get it as a service?
+        # Just get it via doing a lookup on the transform buffer--this function
+        # abstracts away all the computation for you.
 
     def get_steering_angle_to_target(self, target_point_vframe):
         pass
@@ -171,6 +171,30 @@ class PurePursuit(Node):
         pass
 
     def publish_drive_message(self, velocity, steering_angle):
+        pass
+
+    def __control_callback(self) -> None:
+
+        # Attempt to get/compute current pose based on the most recently
+        # received transforms.
+
+        # Attempt to publish the pose (is this necessary?) 
+        # TODO: Question: is it commonplace to have a separate node that takes
+        # the transform and spits out a PoseStamped message? or is just expected
+        # that each node should just be computing this on its own.
+        # However, then what about visualizations?
+
+        # With the pose, call the function to compute the next target waypoint
+        # using the obtained pose.
+        try:
+            car_pose = self.__get_car_pose()
+        except Exception as exc:
+            self.get_logger().warning(f"Failed to obtain car's pose from transform")
+        else:
+            self.__pose_publisher.publish(car_pose)
+            self.get_logger().info(f"Successfully published car's pose.")
+
+        # 
         pass
 
     def pose_callback(self, pose_msg):
