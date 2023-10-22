@@ -41,8 +41,8 @@ ament_python_install_package(${PROJECT_NAME})
 # Install Python executables
 install(PROGRAMS
   scripts/pure_pursuit_node.py
-  scripts/clicked_point_waypoint_logger.py
-  scripts/path_publisher.py
+  scripts/clicked_point_waypoint_logger_node.py
+  scripts/path_publisher_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
