@@ -1,12 +1,14 @@
 import rclpy
 from rclpy.node import Node
+from rclpy.time import Time
 
 import numpy as np
 from sensor_msgs.msg import LaserScan
 from ackermann_msgs.msg import AckermannDriveStamped, AckermannDrive
 from nav_msgs.msg import Path
-from geometry_msgs.msg import Pose, PoseStamped
-# TODO CHECK: include needed ROS msg type headers and libraries
+from geometry_msgs.msg import Pose, PoseStamped, TransformStamped
+from tf2_ros.transform_listener import TransformListener
+from tf2_ros.buffer import Buffer
 
 class PurePursuit(Node):
     """ 
@@ -58,7 +60,73 @@ class PurePursuit(Node):
         # transformation (the "continuous" (high frequency)) odometry estimated
         # position and adding the localization-determined offset to its
         # accurate/real position. This gives us that continuously updated,
-        # smooth, yet periodically corrected position that we want. This is our pose!
+        # smooth, yet periodically corrected position that we want. This is our
+        # pose!
+        #
+
+        # TODO: Also, though--just keep in mind that it's possible that the
+        # f1tenth car packages contain nodes that already take care of this
+        # transformation and just give us the pose on that pose topic--so be
+        # prepared to convert that function to just grab it from a topic that's
+        # already out there.
+
+        # Declare parameters.
+        self.declare_parameters(namespace="",
+                                parameters=[
+                                    ("map_frame", "map"),
+                                    ("car_frame", "base_link")
+                                ])
+        # Create local copies of the parameters.
+        # TODO: Create a paramater update callback function and data structure
+        # to get these parameters.
+        self.__map_frame = self.get_parameter("map_frame")
+        self.__car_frame = self.get_parameter("car_frame")
+        
+        # First, create a transform listener to listen for transform messages.
+        # These will be used to determine the car's localized pose.
+        self.__transform_buffer = Buffer()
+        self.__transform_listener = TransformListener(buffer=self.__transform_buffer, node=self)
+
+        # Temporary pose publisher.
+        self.__pose_publisher_timer = self.create_timer(timer_period_sec=0.1, callback=self.__temp_check_pose_callback)
+        self.pose_publisher = self.create_publisher(msg_type=PoseStamped, topic="/pose_from_transform", qos_profile=10)
+
+    def __get_car_pose(self) -> PoseStamped:
+
+
+        # First, try to obtain transform from map frame to car frame. This is
+        # effectively the bose of the robot, as the robot start's at the origin
+        # of the map frame.
+        try:
+            # TODO: May need to switch which frame is the source and which is
+            # target. 
+            transform: TransformStamped = self.__transform_buffer.lookup_transform(target_frame=self.__car_frame,
+                                                                                   source_frame=self.__map_frame,
+                                                                                   time=Time())
+        except Exception as exc:
+            self.get_logger().warning(f"Failed to obtain transformation from {self.__map_frame} frame to {self.__car_frame} frame needed to determine car pose.")
+            raise exc
+        
+        # Now, create PoseStamped object from transform.
+        new_pose = PoseStamped()
+        new_pose.header.frame_id = transform.header.frame_id
+        new_pose.header.stamp = self.get_clock().now().to_msg()
+        # Extract position from transform.
+        new_pose.pose.position.x = transform.transform.translation.x
+        new_pose.pose.position.y = transform.transform.translation.y
+        new_pose.pose.position.z = transform.transform.translation.z
+        # Extract rotation from transform.
+        new_pose.pose.orientation.x = transform.transform.rotation.x
+        new_pose.pose.orientation.y = transform.transform.rotation.y
+        new_pose.pose.orientation.z = transform.transform.rotation.z
+        new_pose.pose.orientation.w = transform.transform.rotation.w
+        # BEFORE MOVING AHEAD WITH THIS, TRY TO VERIFY THE LOGIC INTUITIVELY.
+        return new_pose
+    
+    def __temp_check_pose_callback(self) -> None:
+        
+        # Create a pose publisher.
+        self.pose_publisher.publish(self.__get_car_pose())
 
     def get_next_target_point(self, current_pose: PoseStamped, path: Path) -> Pose:
         """Function that will take the robot's current pose in the map frame and
@@ -113,11 +181,15 @@ class PurePursuit(Node):
 
         # TODO: publish drive message, don't forget to limit the steering angle.
 
+    # Are we expected to run this controller on a timer? As, there isn't really
+    # a particular topic that we'd have it subscribed to--unless there was a
+    # separate node that was solely responsible for computing the pose.
+
+
 def main(args=None):
     rclpy.init(args=args)
     print("PurePursuit Initialized")
     pure_pursuit_node = PurePursuit()
     rclpy.spin(pure_pursuit_node)
-
     pure_pursuit_node.destroy_node()
     rclpy.shutdown()
