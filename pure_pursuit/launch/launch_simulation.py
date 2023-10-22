@@ -3,6 +3,9 @@ from launch_ros.actions import Node
 from pathlib import Path
 from ament_index_python.packages import get_package_share_directory
 
+# TODO: RENAME THIS FILE TO "launch_simulation.py"
+# TODO: Make another launch file called "launch_car.py"
+
 def generate_launch_description():
     
     # Initialize a new launch description.
