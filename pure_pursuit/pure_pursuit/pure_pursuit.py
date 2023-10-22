@@ -18,13 +18,7 @@ class PurePursuit(Node):
     def __init__(self):
         super().__init__("pure_pursuit")
         
-        # Set up node parameters.
-        self.declare_parameters(namespace="",
-                                parameters=[
-                                    ("lookahead_distance_m", rclpy.Parameter.Type.DOUBLE),
-                                    ("max_longitudinal_velocity_ms", rclpy.Parameter.Type.DOUBLE),
-                                    ("min_longitudinal_velocity_ms", rclpy.Parameter.Type.DOUBLE)
-                                ])
+        
 
         # TODO: Create transform listener(s). Need one to listen for the
         # transform from odom to base_link, and then one from map to odom.
@@ -70,17 +64,21 @@ class PurePursuit(Node):
         # prepared to convert that function to just grab it from a topic that's
         # already out there.
 
-        # Declare parameters.
+        # Set up node parameters.
         self.declare_parameters(namespace="",
                                 parameters=[
+                                    ("lookahead_distance_m", rclpy.Parameter.Type.DOUBLE),
+                                    ("max_longitudinal_velocity_ms", rclpy.Parameter.Type.DOUBLE),
+                                    ("min_longitudinal_velocity_ms", rclpy.Parameter.Type.DOUBLE),
                                     ("map_frame", "map"),
                                     ("car_frame", "base_link")
                                 ])
+
         # Create local copies of the parameters.
         # TODO: Create a paramater update callback function and data structure
         # to get these parameters.
-        self.__map_frame = self.get_parameter("map_frame")
-        self.__car_frame = self.get_parameter("car_frame")
+        self.__map_frame = self.get_parameter("map_frame").value
+        self.__car_frame = self.get_parameter("car_frame").value
         
         # First, create a transform listener to listen for transform messages.
         # These will be used to determine the car's localized pose.
@@ -98,10 +96,8 @@ class PurePursuit(Node):
         # effectively the bose of the robot, as the robot start's at the origin
         # of the map frame.
         try:
-            # TODO: May need to switch which frame is the source and which is
-            # target. 
-            transform: TransformStamped = self.__transform_buffer.lookup_transform(target_frame=self.__car_frame,
-                                                                                   source_frame=self.__map_frame,
+            transform: TransformStamped = self.__transform_buffer.lookup_transform(target_frame=self.__map_frame,
+                                                                                   source_frame=self.__car_frame,
                                                                                    time=Time())
         except Exception as exc:
             self.get_logger().warning(f"Failed to obtain transformation from {self.__map_frame} frame to {self.__car_frame} frame needed to determine car pose.")
@@ -126,7 +122,13 @@ class PurePursuit(Node):
     def __temp_check_pose_callback(self) -> None:
         
         # Create a pose publisher.
-        self.pose_publisher.publish(self.__get_car_pose())
+        try:
+            car_pose = self.__get_car_pose()
+        except Exception as exc:
+            self.get_logger().warning(f"Failed to obtain car's pose from transform")
+        else:
+            self.pose_publisher.publish(car_pose)
+            self.get_logger().info(f"Successfully published car's pose.")
 
     def get_next_target_point(self, current_pose: PoseStamped, path: Path) -> Pose:
         """Function that will take the robot's current pose in the map frame and
