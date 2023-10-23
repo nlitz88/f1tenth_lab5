@@ -16,7 +16,7 @@ class PurePursuit(Node):
     """
     
     def __init__(self):
-        super().__init__()
+        super().__init__("pure_pursuit")
 
         # Set up node parameters.
         self.declare_parameters(namespace="",
@@ -134,7 +134,7 @@ class PurePursuit(Node):
         # Store the most recent pose.
         with self.__pose_lock:
             self.__pose = new_pose
-        self.get_logger().debug("Received new pose")
+        self.get_logger().info("Received new pose")
 
 def main(args=None):
     rclpy.init(args=args)

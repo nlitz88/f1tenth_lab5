@@ -35,15 +35,13 @@ def generate_launch_description():
         # arguments=["--ros-args", "--log-level", "debug"],
     )
     # path_file_publisher_node = Node(
-    #     namespace="ego_racecar",
     #     package="pure_pursuit",
     #     executable="path_publisher_node.py",
-    #     name="path_publisher",
     #     parameters=[simulation_params],
     #     remappings="" # TODO: PLACE WHATEVER TOPIC REMAPPING IS NEEDED HERE FOR SIMULATION. REMAP ODOM, ANY OTHERS NEEDED.
     # )
     # Add the launch_ros "Node" actions we created.
-    # ld.add_action(pure_pursuit_node)
+    ld.add_action(pure_pursuit_node)
     ld.add_action(pose_publisher_node)
     # ld.add_action(path_file_publisher_node)
 
