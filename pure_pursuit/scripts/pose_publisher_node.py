@@ -30,7 +30,7 @@ class PosePublisher(Node):
     """
 
     def __init__(self):
-        super().__init__("pose_publisher")
+        super().__init__("car_pose_publisher")
 
         # Set up node parameters.
         self.declare_parameters(namespace=self.get_namespace(), 
@@ -50,14 +50,17 @@ class PosePublisher(Node):
         self.__transform_listener = TransformListener(buffer=self.__transform_buffer, node=self)
 
         # Create subscriber for odometry messages.
+        # NOTE: Take note of how I'm NOT using the absolute topic name /odom,
+        # but instead a relative topic name "odom". This allows for the topic to
+        # be "resolved" within this node's namespace automatically.
         self.__odom_subscriber = self.create_subscription(msg_type=Odometry, 
-                                                          topic=f"/odom",
+                                                          topic=f"odom",
                                                           callback=self.__odom_callback,
                                                           qos_profile=10)
         # Create publisher we'll use to actually publish the pose obtained from
         # the transforms.
         self.__pose_publisher = self.create_publisher(msg_type=PoseWithCovarianceStamped,
-                                                      topic=f"/pose",
+                                                      topic=f"pose",
                                                       qos_profile=10)
     
     def __odom_callback(self, odom_message: Odometry) -> None:

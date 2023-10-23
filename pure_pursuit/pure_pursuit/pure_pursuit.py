@@ -12,57 +12,11 @@ from tf2_ros.buffer import Buffer
 
 class PurePursuit(Node):
     """ 
-    Implement Pure Pursuit on the car
-    This is just a template, you are free to implement your own node!
+    Node implementing the pure pursuit controller.
     """
-    def __init__(self):
-        super().__init__("pure_pursuit")
-        
-        
-
-        # TODO: Create transform listener(s). Need one to listen for the
-        # transform from odom to base_link, and then one from map to odom.
-        # Create those transform listeners here. NOTE: There doesn't seem to be
-        # an odom frame in simulation, so may have to have a different node for
-        # the physical robot? OR, could just use some logic from the parameters
-        # that the node is set up with to configure how it is set up.
-
-        # NOTE: Maybe for the simulation, the bridge node's /ego_racecar/pose
-        # messages simulate the pose that we'd get by using a particle filter
-        # and computing the corrected pose using the map-->odom +
-        # odom-->base_link transforms manually. SO, if that's true, for
-        # simulation, only need to subscribe to the /ego_racecar/pose topic.
-
-        # WELL, maybe rather than subscribing to the pose message, we can use a
-        # function "get_pose" that 
-        # a.) For simulation, just subscribes to whatever topic publishes the
-        # pose.
-        # b.) for the real robot, just 
-        
-        # For simulation (and the real robot as well), I think the TF library
-        # completely simplifies this whole process. Why? Because we are just
-        # asking it to "give us the transform from the map frame to the base
-        # link frame." We don't care if there's an odom frame between those two
-        # frames or not--that's up to TF2 to know what the transform tree looks
-        # like!
-
-        # Therefore, we can just ask for that transform in all contexts, and TF
-        # will figure out how to get us there.
-
-        # AND, in this specific case, asking for the transform from map to base
-        # link means we'll be taking the odometry generated odom-->base_link
-        # transformation (the "continuous" (high frequency)) odometry estimated
-        # position and adding the localization-determined offset to its
-        # accurate/real position. This gives us that continuously updated,
-        # smooth, yet periodically corrected position that we want. This is our
-        # pose!
-        #
-
-        # TODO: Also, though--just keep in mind that it's possible that the
-        # f1tenth car packages contain nodes that already take care of this
-        # transformation and just give us the pose on that pose topic--so be
-        # prepared to convert that function to just grab it from a topic that's
-        # already out there.
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__("pure_pursuit", *args, **kwargs)
 
         # Set up node parameters.
         self.declare_parameters(namespace=self.get_namespace(),
@@ -77,10 +31,10 @@ class PurePursuit(Node):
                                 ])
         # Grab values of parameters for local use after being declared.
         # TODO: Need to set up a parameter update callback function.
-        self.__lookahead_distance_m = self.get_parameter("lookahead_distance_m").value
-        self.__max_longitudinal_velocity_ms = self.get_parameter("max_longitudinal_velocity_ms").value
-        self.__min_longitudinal_velocity_ms = self.get_parameter("min_longitudinal_velocity_ms").value
-        self.__controller_frequency = self.get_parameter("controller_frequency").value
+        self.__lookahead_distance_m = self.get_parameter(f"{self.get_namespace()}.lookahead_distance_m").value
+        self.__max_longitudinal_velocity_ms = self.get_parameter(f"{self.get_namespace()}.max_longitudinal_velocity_ms").value
+        self.__min_longitudinal_velocity_ms = self.get_parameter(f"{self.get_namespace()}.min_longitudinal_velocity_ms").value
+        self.__controller_frequency = self.get_parameter(f"{self.get_namespace()}.controller_frequency_hz").value
 
         # Set up timer for controlling how frequently pure pursuit commands new
         # control values.
