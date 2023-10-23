@@ -101,3 +101,39 @@ class TestEuclideanDistance(unittest.TestCase):
         vector_b = np.array([4.0, 5, 6.5])
         expected_distance = np.sqrt(np.sum((vector_a - vector_b) ** 2))
         self.assertEqual(euclidean_distance(vector_a, vector_b), expected_distance)
+
+class TestGetDistanceToEachPoint(unittest.TestCase):
+    def test_distance_to_each_point(self):
+        current_position = np.array([1.0, 2.0])
+        numpy_path = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
+        expected_distances = np.array([0.0, np.sqrt(8.0), np.sqrt(32.0)])
+        distances = get_distance_to_each_point(current_position, numpy_path)
+        np.testing.assert_array_almost_equal(distances, expected_distances, decimal=6)
+
+    def test_distance_to_each_point_single_point_path(self):
+        current_position = np.array([1.0, 2.0])
+        numpy_path = np.array([[3.0, 4.0]])
+        expected_distance = np.sqrt(8.0)
+        distances = get_distance_to_each_point(current_position, numpy_path)
+        self.assertEqual(distances[0], expected_distance)
+
+    def test_distance_to_each_point(self):
+        current_position = np.array([1.0, 2.0])
+        numpy_path = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
+        expected_distances = np.array([0.0, np.sqrt(8.0), np.sqrt(32.0)])
+        distances = get_distance_to_each_point(current_position, numpy_path)
+        np.testing.assert_array_almost_equal(distances, expected_distances, decimal=6)
+
+    def test_distance_to_each_point_long_path(self):
+        current_position = np.array([0.0, 0.0])
+        numpy_path = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0], [7.0, 8.0], [9.0, 10.0]])
+        expected_distances = np.array([np.sqrt(5.0), np.sqrt(25.0), np.sqrt(61.0), np.sqrt(113.0), np.sqrt(181.0)])
+        distances = get_distance_to_each_point(current_position, numpy_path)
+        np.testing.assert_array_almost_equal(distances, expected_distances, decimal=6)
+
+    def test_distance_to_each_point_negative_coordinates(self):
+        current_position = np.array([-2.0, -3.0])
+        numpy_path = np.array([[-2.0, -3.0], [1.0, 1.0], [-5.0, -6.0]])
+        expected_distances = np.array([0.0, np.sqrt(25.0), np.sqrt(18)])
+        distances = get_distance_to_each_point(current_position, numpy_path)
+        np.testing.assert_array_almost_equal(distances, expected_distances, decimal=6)
