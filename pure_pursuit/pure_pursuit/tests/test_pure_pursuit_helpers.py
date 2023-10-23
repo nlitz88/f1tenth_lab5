@@ -80,3 +80,39 @@ class TestNumpyArrayFromPath(unittest.TestCase):
         # Check if the result matches the expected array
         self.assertTrue(np.allclose(result, expected, rtol=1e-8))
         
+class TestEuclideanDistance(unittest.TestCase):
+    def test_euclidean_distance_same_vector(self):
+        vector = np.array([1, 2, 3])
+        self.assertEqual(euclidean_distance(vector, vector), 0.0)
+
+    def test_euclidean_distance_different_vectors(self):
+        vector_a = np.array([1, 2, 3])
+        vector_b = np.array([4, 5, 6])
+        expected_distance = np.linalg.norm(vector_a - vector_b)
+        self.assertEqual(euclidean_distance(vector_a, vector_b), expected_distance)
+
+    def test_euclidean_distance_zero_vectors(self):
+        vector_a = np.array([0, 0, 0])
+        vector_b = np.array([0, 0, 0])
+        self.assertEqual(euclidean_distance(vector_a, vector_b), 0.0)
+
+    def test_euclidean_distance_same_vector(self):
+        vector = np.array([1.0, 2.0, 3.0])
+        self.assertEqual(euclidean_distance(vector, vector), 0.0)
+
+    def test_euclidean_distance_different_vectors(self):
+        vector_a = np.array([1.5, 2.5, 3.5])
+        vector_b = np.array([4.0, 5.0, 6.0])
+        expected_distance = np.linalg.norm(vector_a - vector_b)
+        self.assertEqual(euclidean_distance(vector_a, vector_b), expected_distance)
+
+    def test_euclidean_distance_zero_vectors(self):
+        vector_a = np.array([0.0, 0.0, 0.0])
+        vector_b = np.array([0.0, 0.0, 0.0])
+        self.assertEqual(euclidean_distance(vector_a, vector_b), 0.0)
+
+    def test_euclidean_distance_mixed_data_types(self):
+        vector_a = np.array([1.0, 2.5, 3.0])
+        vector_b = np.array([4.0, 5, 6.5])
+        expected_distance = np.linalg.norm(vector_a - vector_b)
+        self.assertEqual(euclidean_distance(vector_a, vector_b), expected_distance)

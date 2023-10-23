@@ -1,6 +1,8 @@
+from typing import Tuple
 import numpy as np
 from nav_msgs.msg import Path
 from geometry_msgs.msg import Pose, PoseWithCovarianceStamped
+
 
 
 def numpy_array_from_path(path: Path) -> np.ndarray:
@@ -12,7 +14,43 @@ def numpy_array_from_path(path: Path) -> np.ndarray:
     Returns:
         np.ndarray: _description_
     """
-    return np.array([[pose.position.x, pose.position.y] for pose in path.poses])
+    return np.array([[float(pose.position.x), float(pose.position.y)] for pose in path.poses])
+
+def euclidean_distance(vector_a: np.ndarray, vector_b: np.ndarray) -> float:
+    """Tiny helper function to compute euclidean distance using numpy.
+    Fast method found on
+    https://stackoverflow.com/questions/1401712/how-can-the-euclidean-distance-be-calculated-with-numpy
+    
+    Args:
+        row (np.ndarray): numpy array row.
+
+    Returns:
+        float: The euclidean distance between vector_a and vector_b.
+    """
+    return np.linalg.norm(vector_a-vector_b)
+
+def get_distance_to_each_point(current_position: Tuple[float, float], 
+                               numpy_path: np.ndarray) -> np.ndarray:
+    """Given your current 2D position in a given frame of reference and a numpy
+    array of 2D positions in that same frame that describe a path (a sequence of
+    waypoints), this function computes the distance from your current position
+    to EACH of the nodes in the provided path. Returns a numpy array with as
+    many distances as there are points (rows) in the input array numpy_path.
+    I.e., the ith distance in the returned array will be the euclidean distance
+    from the provided current_position to the ith waypoint in the input
+    numpy_path array.
+
+    Args:
+        current_position (np.ndarray): Your current position (x,y) in a
+        given frame as a 1D ndarray.
+        numpy_path (np.ndarray): Array of 2D waypoints comprising a path in the
+        same frame as the current_position.
+
+    Returns:
+        np.ndarray: The array of distances from your current position to each of
+        the positions/waypoints in the provided numpy_path.
+    """
+    return np.apply_along_axis(euclidean_distance, 1, numpy_path, current_position)
 
 
 # NOTE: This function is like the integration of each step / smaller function.
