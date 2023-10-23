@@ -89,9 +89,9 @@ class PosePublisher(Node):
         # 2. If transform successfully obtained, build up the new
         #    PoseWithCovarianceStamped message.
         new_pose = PoseWithCovarianceStamped()
-        # new_pose.header.frame_id = transform.header.frame_id # TODO: Shouldn't this be the child_frame_id of the transform? As the header frame id == id of frame that you're transforming from?
+        new_pose.header.frame_id = transform.header.frame_id # TODO: Shouldn't this be the child_frame_id of the transform? As the header frame id == id of frame that you're transforming from?
         # Interpret position from transform.
-        new_pose.header.frame_id = transform.child_frame_id
+        # new_pose.header.frame_id = transform.child_frame_id
         new_pose.header.stamp = odom_message.header.stamp
         new_pose.pose.pose.position.x = transform.transform.translation.x
         new_pose.pose.pose.position.y = transform.transform.translation.y
