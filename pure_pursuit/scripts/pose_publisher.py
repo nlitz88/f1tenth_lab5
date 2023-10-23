@@ -2,7 +2,7 @@
 import rclpy
 from rclpy.node import Node
 from rclpy.time import Time
-from geometry_msgs.msg import PoseStamped, TransformStamped
+from geometry_msgs.msg import PoseWithCovarianceStamped, TransformStamped
 from nav_msgs.msg import Odometry
 from tf2_ros.transform_listener import TransformListener
 from tf2_ros.buffer import Buffer
@@ -23,6 +23,10 @@ class PosePublisher(Node):
     target_frame (str): The frame that you wish to represent the pose of the
         source frame in terms of. In the above example, the map would be the
         target frame.
+
+    The pose publisher subscribes to the /odom topic in the node's namespace by
+    default and publishes to the /pose topic within the node's namespace by
+    default.
     """
 
     def __init__(self):
@@ -33,7 +37,6 @@ class PosePublisher(Node):
                                 parameters=[
                                     ("source_frame", "base_link"),
                                     ("target_frame", "map"),
-                                    ("publishing_frequency", 100)
                                 ])
         # Create local copies of the parameters.
         # TODO: Create a paramater update callback function and data structure
@@ -46,65 +49,59 @@ class PosePublisher(Node):
         self.__transform_buffer = Buffer()
         self.__transform_listener = TransformListener(buffer=self.__transform_buffer, node=self)
 
-        # Create a timer to kick off getting the pose and publishing it.
-        self.__pose_timer = self.create_timer(timer_period_sec=1/100.0, 
-                                              callback=self.__pose_timer_callback)
-        
-        self.__odom_subscriber = self.create_subscription(msg_type=)
+        # Create subscriber for odometry messages.
+        self.__odom_subscriber = self.create_subscription(msg_type=Odometry, 
+                                                          topic=f"/{self.get_namespace()}/odom",
+                                                          callback=self.__odom_callback,
+                                                          qos_profile=10)
         # Create publisher we'll use to actually publish the pose obtained from
         # the transforms.
-        self.__pose_publisher = self.create_publisher(msg_type=PoseStamped,
+        self.__pose_publisher = self.create_publisher(msg_type=PoseWithCovarianceStamped,
                                                       topic=f"/{self.get_namespace()}/pose",
                                                       qos_profile=10)
+    
+    def __odom_callback(self, odom_message: Odometry) -> None:
+        # NOTE: Considering going this route where I try to publish at about the
+        # same speed as geometry. Basically, doing it this way would allow me to
+        # also include Covariance from the Odometry in a
+        # PoseWithCovarianceStamped message.
 
-    def __get_car_pose(self) -> PoseStamped:
-        # TODO: Update to also include covariance!!! Not sure how to do this
-        # yet. May just revert back to using regular pose if I run out of time.
-        # I feel like I'd have to also subscribe to the car's odom topic, as
-        # that's where the covariance is going to come from.
-        """Gets the car frame's (base_link frame's) pose in the map frame.
+        # Let's write out this function in steps first, and if I see an obvious,
+        # intuitive way to modularize, go for that. Otherwise, it'll stay like
+        # this until it needs refactored. Can't spend more time on this right
+        # now.
 
-        Raises:
-            exc: Raises Exception if it fails to obtain the transformations that
-            are needed to compute the pose.
-
-        Returns:
-            PoseStamped: Timestamped Pose of the car.
-        """
-
-        # First, try to obtain transform from map frame to car frame. This is
-        # effectively the bose of the robot, as the robot start's at the origin
-        # of the map frame.
+        # 1. Try to get the transform from the source frame to the target frame.
+        #    Return if an exception is thrown and the transformation can't be
+        #    obtained.
         try:
             transform: TransformStamped = self.__transform_buffer.lookup_transform(target_frame=self.__target_frame,
                                                                                    source_frame=self.__source_frame,
                                                                                    time=Time())
         except Exception as exc:
-            self.get_logger().warning(f"Failed to obtain transformation from {self.__map_frame} frame to {self.__car_frame} frame needed to determine car pose.")
-            raise exc
-        # Now, create PoseStamped object from transform.
-        new_pose = PoseStamped()
-        new_pose.header.frame_id = transform.header.frame_id
-        new_pose.header.stamp = self.get_clock().now().to_msg()
-        # Extract position from transform.
-        transform.transform.
-        new_pose.pose.position.x = transform.transform.translation.x
-        new_pose.pose.position.y = transform.transform.translation.y
-        new_pose.pose.position.z = transform.transform.translation.z
-        # Extract rotation from transform.
-        new_pose.pose.orientation.x = transform.transform.rotation.x
-        new_pose.pose.orientation.y = transform.transform.rotation.y
-        new_pose.pose.orientation.z = transform.transform.rotation.z
-        new_pose.pose.orientation.w = transform.transform.rotation.w
-        # BEFORE MOVING AHEAD WITH THIS, TRY TO VERIFY THE LOGIC INTUITIVELY.
-        return new_pose
-    
-    def __pose_timer_callback(self):
-        
-        
-        pass
-        
-        
+            self.get_logger().warning(f"Failed to obtain transformation from {self.__source_frame} frame to {self.__target_frame} frame needed to determine pose.")
+            return
+        else:
+            self.get_logger().debug(f"Successfully obtained transformation from {self.__source_frame} frame to {self.__target_frame} frame needed to determine pose.")
+        # 2. If transform successfully obtained, build up the new
+        #    PoseWithCovarianceStamped message.
+        new_pose = PoseWithCovarianceStamped()
+        # new_pose.header.frame_id = transform.header.frame_id # TODO: Shouldn't this be the child_frame_id of the transform? As the header frame id == id of frame that you're transforming from?
+        # Interpret position from transform.
+        new_pose.header.frame_id = transform.child_frame_id
+        new_pose.header.stamp = odom_message.header.stamp
+        new_pose.pose.pose.position.x = transform.transform.translation.x
+        new_pose.pose.pose.position.y = transform.transform.translation.y
+        new_pose.pose.pose.position.z = transform.transform.translation.z
+        # Interpret rotation from transform.
+        new_pose.pose.pose.orientation.x = transform.transform.rotation.x
+        new_pose.pose.pose.orientation.y = transform.transform.rotation.y
+        new_pose.pose.pose.orientation.z = transform.transform.rotation.z
+        new_pose.pose.pose.orientation.w = transform.transform.rotation.w
+        # Get covariance from odometry and assign that here.
+        new_pose.pose.covariance = odom_message.pose.covariance
+        # Publish new pose.
+        self.__pose_publisher.publish(new_pose) 
 
 def main(args = None):
     rclpy.init(args=args)
