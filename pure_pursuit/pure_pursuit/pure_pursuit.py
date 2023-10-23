@@ -7,6 +7,8 @@ import numpy as np
 from ackermann_msgs.msg import AckermannDriveStamped
 from nav_msgs.msg import Path
 from geometry_msgs.msg import Pose, PoseWithCovarianceStamped
+from tf2_ros.transform_listener import TransformListener
+from tf2_ros.buffer import Buffer
 
 class PurePursuit(Node):
     """ 
@@ -68,7 +70,10 @@ class PurePursuit(Node):
                                     ("lookahead_distance_m", rclpy.Parameter.Type.DOUBLE),
                                     ("max_longitudinal_velocity_ms", rclpy.Parameter.Type.DOUBLE),
                                     ("min_longitudinal_velocity_ms", rclpy.Parameter.Type.DOUBLE),
-                                    ("controller_frequency_hz", 100) 
+                                    ("controller_frequency_hz", 100)
+                                    # MAY HAVE TO ADD PARAMETERS FOR CAR_FRAME
+                                    # AND MAP_FRAME or something like that here
+                                    # for the transformation in step 2.
                                 ])
         # Grab values of parameters for local use after being declared.
         # TODO: Need to set up a parameter update callback function.
@@ -103,6 +108,12 @@ class PurePursuit(Node):
         self.__drive_publisher = self.create_publisher(msg_type=AckermannDriveStamped,
                                                        topic=f"/drive",
                                                        qos_profile=10)
+        
+        # Create a transform listener to listen for transform messages.
+        # These will be used to transform points in the map frame to the
+        # car's reference frame (base_link).
+        self.__transform_buffer = Buffer()
+        self.__transform_listener = TransformListener(buffer=self.__transform_buffer, node=self)
 
     def get_next_target_point(self, 
                               current_pose: PoseWithCovarianceStamped, 
