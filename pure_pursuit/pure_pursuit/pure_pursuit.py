@@ -1,3 +1,4 @@
+from threading import Lock
 import rclpy
 from rclpy.node import Node
 from rclpy.time import Time
@@ -79,7 +80,7 @@ class PurePursuit(Node):
         # Set up timer for controlling how frequently pure pursuit commands new
         # control values.
         self.__control_timer = self.create_timer(timer_period_sec=1.0/float(self.__controller_frequency),
-        callback=self.__control_callback)
+                                                 callback=self.__control_callback)
         
         # Create a subscriber for the vehicle's pose. 
         # TODO: Not sure if pure pursuit needs to recalculate its values every
@@ -87,7 +88,14 @@ class PurePursuit(Node):
         # lower frequency. In which case, I think this subscriber would just
         # update a synchronized variable that we maintain the pose in, and then
         # the timer is what invokes the actual pure pursuit control logic.
-        self.__pose_subscriber = self.create_subscription(msg_type=PoseWithCovarianceStamped)
+        self.__pose_subscriber = self.create_subscription(msg_type=PoseWithCovarianceStamped,
+                                                          topic="/pose",
+                                                          callback=self.__pose_callback, 
+                                                          qos_profile=10)
+        # Instance variable and accompanying mutex to cache most recently
+        # obtained pose.
+        self.__pose: PoseWithCovarianceStamped = None
+        self.__pose_lock = Lock()
 
         # Create a drive publisher to command the resulting drive values.
         # TODO: May have to update this topic (and a number of other things)
@@ -96,12 +104,15 @@ class PurePursuit(Node):
                                                        topic=f"/drive",
                                                        qos_profile=10)
 
-    def get_next_target_point(self, current_pose: PoseWithCovarianceStamped, path: Path) -> Pose:
+    def get_next_target_point(self, 
+                              current_pose: PoseWithCovarianceStamped, 
+                              path: Path) -> Pose:
         """Function that will take the robot's current pose in the map frame and
         determine what the next target point should be.
 
         Specifically, this implementation looks at which point in the path array
-        is closest the lookahead distance away from the vehicle.
+        is closest the lookahead distance away from the vehicle sequentially
+        after the point that is currently closest to the car.
 
         Args:
             current_pose (PoseStamped): The robot's current pose in the map
@@ -143,10 +154,6 @@ class PurePursuit(Node):
 
     def __control_callback(self) -> None:
 
-        pass
-
-    def __pose_callback(self, pose_msg):
-        pass
         # TODO: find the current waypoint to track using methods mentioned in lecture
 
         # TODO: transform goal point to vehicle frame of reference
@@ -155,10 +162,14 @@ class PurePursuit(Node):
 
         # TODO: publish drive message, don't forget to limit the steering angle.
 
-    # Are we expected to run this controller on a timer? As, there isn't really
-    # a particular topic that we'd have it subscribed to--unless there was a
-    # separate node that was solely responsible for computing the pose.
+        pass
 
+    def __pose_callback(self, new_pose: PoseWithCovarianceStamped) -> None:
+
+        # Store the most recent pose.
+        with self.__pose_lock:
+            self.__pose = new_pose
+        self.get_logger().debug("Received new pose")
 
 def main(args=None):
     rclpy.init(args=args)
