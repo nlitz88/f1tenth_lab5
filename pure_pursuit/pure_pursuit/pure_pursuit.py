@@ -65,68 +65,22 @@ class PurePursuit(Node):
         # already out there.
 
         # Set up node parameters.
-        self.declare_parameters(namespace="",
+        self.declare_parameters(namespace=self.get_namespace(),
                                 parameters=[
                                     ("lookahead_distance_m", rclpy.Parameter.Type.DOUBLE),
                                     ("max_longitudinal_velocity_ms", rclpy.Parameter.Type.DOUBLE),
-                                    ("min_longitudinal_velocity_ms", rclpy.Parameter.Type.DOUBLE),
-                                    ("map_frame", "map"),
-                                    ("car_frame", "base_link")
+                                    ("min_longitudinal_velocity_ms", rclpy.Parameter.Type.DOUBLE),  
                                 ])
 
-        # Create local copies of the parameters.
-        # TODO: Create a paramater update callback function and data structure
-        # to get these parameters.
-        self.__map_frame = self.get_parameter("map_frame").value
-        self.__car_frame = self.get_parameter("car_frame").value
-        
-        # First, create a transform listener to listen for transform messages.
-        # These will be used to determine the car's localized pose.
-        self.__transform_buffer = Buffer()
-        self.__transform_listener = TransformListener(buffer=self.__transform_buffer, node=self)
-
-        # Temporary pose publisher.
+        # Set up timer for controlling how frequently pure pursuit commands new
+        # control values.
         self.__control_timer = self.create_timer(timer_period_sec=0.1, callback=self.__control_callback)
-        # NOTE: Not sure if this is really appropriate--is it this node's
-        # responsibility to be publishing the car's pose? Doesn't feel like it.
-        self.__pose_publisher = self.create_publisher(msg_type=PoseStamped, topic="/ego_racecar/pose", qos_profile=10)
 
-    def __get_car_pose(self) -> PoseStamped:
-        """Gets the car's pose in the map frame.
-
-        Raises:
-            exc: Raises Exception if it fails to obtain the transformations that
-            are needed to compute the pose.
-
-        Returns:
-            PoseStamped: Timestamped Pose of the car.
-        """
-
-        # First, try to obtain transform from map frame to car frame. This is
-        # effectively the bose of the robot, as the robot start's at the origin
-        # of the map frame.
-        try:
-            transform: TransformStamped = self.__transform_buffer.lookup_transform(target_frame=self.__map_frame,
-                                                                                   source_frame=self.__car_frame,
-                                                                                   time=Time())
-        except Exception as exc:
-            self.get_logger().warning(f"Failed to obtain transformation from {self.__map_frame} frame to {self.__car_frame} frame needed to determine car pose.")
-            raise exc
-        # Now, create PoseStamped object from transform.
-        new_pose = PoseStamped()
-        new_pose.header.frame_id = transform.header.frame_id
-        new_pose.header.stamp = self.get_clock().now().to_msg()
-        # Extract position from transform.
-        new_pose.pose.position.x = transform.transform.translation.x
-        new_pose.pose.position.y = transform.transform.translation.y
-        new_pose.pose.position.z = transform.transform.translation.z
-        # Extract rotation from transform.
-        new_pose.pose.orientation.x = transform.transform.rotation.x
-        new_pose.pose.orientation.y = transform.transform.rotation.y
-        new_pose.pose.orientation.z = transform.transform.rotation.z
-        new_pose.pose.orientation.w = transform.transform.rotation.w
-        # BEFORE MOVING AHEAD WITH THIS, TRY TO VERIFY THE LOGIC INTUITIVELY.
-        return new_pose
+        # Create a drive publisher to command the resulting drive values.
+        # TODO: May have to update this topic (and a number of other things)
+        # depending on how these namespaces work.
+        self.__drive_publisher = self.create_publisher(msg_type=AckermannDriveStamped,
+                                                       topic=f"/{self.get_namespace()}/cmd_vel")
 
     def get_next_target_point(self, current_pose: PoseStamped, path: Path) -> Pose:
         """Function that will take the robot's current pose in the map frame and

@@ -1,0 +1,15 @@
+path_file_publisher:
+  ros__parameters:
+    filepath: "./install/pure_pursuit/share/pure_pursuit/path_files/levine_rough_path.csv"
+
+ego_racecar:
+  pure_pursuit:
+    ros__parameters:
+      lookahead_distance_m: 1.0
+      max_longitudinal_velocity_ms: 1.0
+      min_longitudinal_velocity_ms: 1.0
+    
+  pose_publisher:
+    ros__parameters:
+      source_frame: "ego_racecar/base_link"
+      target_frame: "map"

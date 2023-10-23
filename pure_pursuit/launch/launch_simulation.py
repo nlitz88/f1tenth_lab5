@@ -12,21 +12,28 @@ def generate_launch_description():
     ld = LaunchDescription()
     
     # Get path to the params.yaml file.
-    params = Path(get_package_share_directory("pure_pursuit"), "config", "params.yaml")
+    simulation_params = Path(get_package_share_directory("pure_pursuit"), "config", "simulation_params.yaml")
 
     # Create new actions to spin up nodes for the pure pursuit node and path
     # file publisher node.
     pure_pursuit_node = Node(
         package="pure_pursuit",
         executable="pure_pursuit_node.py",
-        parameters=[params],
+        parameters=[simulation_params],
     )
-    # path_file_publisher_node = Node(
-    #     package="pure_pursuit",
-    #     executable="path_publisher_node.py",
-    #     parameters=[params],
-    #     remappings="" # TODO: PLACE WHATEVER TOPIC REMAPPING IS NEEDED HERE FOR SIMULATION. REMAP ODOM, ANY OTHERS NEEDED.
-    # )
+    pose_publisher_node = Node(
+        package="pure_pursuit",
+        executable="pose_publisher.py",
+        name="car_pose_publisher",
+        parameters=[simulation_params]
+    )
+    path_file_publisher_node = Node(
+        package="pure_pursuit",
+        executable="path_publisher_node.py",
+        name="path_publisher",
+        parameters=[simulation_params],
+        remappings="" # TODO: PLACE WHATEVER TOPIC REMAPPING IS NEEDED HERE FOR SIMULATION. REMAP ODOM, ANY OTHERS NEEDED.
+    )
     # Add the launch_ros "Node" actions we created.
     ld.add_action(pure_pursuit_node)
     # ld.add_action(path_file_publisher_node)
