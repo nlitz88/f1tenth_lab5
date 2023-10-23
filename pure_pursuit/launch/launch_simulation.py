@@ -16,20 +16,23 @@ def generate_launch_description():
 
     # Create new actions to spin up nodes for the pure pursuit node and path
     # file publisher node.
-    # pure_pursuit_node = Node(
-    #     namespace="ego_racecar",
-    #     package="pure_pursuit",
-    #     executable="pure_pursuit_node.py",
-    #     parameters=[simulation_params],
-    #     arguments=["--ros-args", "--log-level", "debug"]
-    # )
+    pure_pursuit_node = Node(
+        # namespace="ego_racecar",
+        package="pure_pursuit",
+        executable="pure_pursuit_node.py",
+        parameters=[simulation_params],
+        remappings=[("pose", "ego_racecar/pose")]
+        # arguments=["--ros-args", "--log-level", "debug"]
+    )
     pose_publisher_node = Node(
-        namespace="ratspace",
         package="pure_pursuit",
         executable="pose_publisher_node.py",
-        name="car_pose_publisher",
         parameters=[simulation_params],
-        arguments=["--ros-args", "--log-level", "debug"]
+        # NOTE: For now, not using namespaces until I can spend more time
+        # figuring out how to manipulate the bridge's namespaces.
+        remappings=[("odom", "ego_racecar/odom"),
+                    ("pose", "ego_racecar/pose")]
+        # arguments=["--ros-args", "--log-level", "debug"],
     )
     # path_file_publisher_node = Node(
     #     namespace="ego_racecar",

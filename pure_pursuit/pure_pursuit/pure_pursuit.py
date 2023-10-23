@@ -15,11 +15,11 @@ class PurePursuit(Node):
     Node implementing the pure pursuit controller.
     """
     
-    def __init__(self, *args, **kwargs):
-        super().__init__("pure_pursuit", *args, **kwargs)
+    def __init__(self):
+        super().__init__()
 
         # Set up node parameters.
-        self.declare_parameters(namespace=self.get_namespace(),
+        self.declare_parameters(namespace="",
                                 parameters=[
                                     ("lookahead_distance_m", rclpy.Parameter.Type.DOUBLE),
                                     ("max_longitudinal_velocity_ms", rclpy.Parameter.Type.DOUBLE),
@@ -31,10 +31,10 @@ class PurePursuit(Node):
                                 ])
         # Grab values of parameters for local use after being declared.
         # TODO: Need to set up a parameter update callback function.
-        self.__lookahead_distance_m = self.get_parameter(f"{self.get_namespace()}.lookahead_distance_m").value
-        self.__max_longitudinal_velocity_ms = self.get_parameter(f"{self.get_namespace()}.max_longitudinal_velocity_ms").value
-        self.__min_longitudinal_velocity_ms = self.get_parameter(f"{self.get_namespace()}.min_longitudinal_velocity_ms").value
-        self.__controller_frequency = self.get_parameter(f"{self.get_namespace()}.controller_frequency_hz").value
+        self.__lookahead_distance_m = self.get_parameter("lookahead_distance_m").value
+        self.__max_longitudinal_velocity_ms = self.get_parameter("max_longitudinal_velocity_ms").value
+        self.__min_longitudinal_velocity_ms = self.get_parameter("min_longitudinal_velocity_ms").value
+        self.__controller_frequency = self.get_parameter("controller_frequency_hz").value
 
         # Set up timer for controlling how frequently pure pursuit commands new
         # control values.
@@ -48,7 +48,7 @@ class PurePursuit(Node):
         # update a synchronized variable that we maintain the pose in, and then
         # the timer is what invokes the actual pure pursuit control logic.
         self.__pose_subscriber = self.create_subscription(msg_type=PoseWithCovarianceStamped,
-                                                          topic="/pose",
+                                                          topic="pose",
                                                           callback=self.__pose_callback, 
                                                           qos_profile=10)
         # Instance variable and accompanying mutex to cache most recently
@@ -60,7 +60,7 @@ class PurePursuit(Node):
         # TODO: May have to update this topic (and a number of other things)
         # depending on how these namespaces work.
         self.__drive_publisher = self.create_publisher(msg_type=AckermannDriveStamped,
-                                                       topic=f"/drive",
+                                                       topic=f"drive",
                                                        qos_profile=10)
         
         # Create a transform listener to listen for transform messages.

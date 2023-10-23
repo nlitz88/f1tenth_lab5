@@ -24,8 +24,8 @@ class PosePublisher(Node):
         source frame in terms of. In the above example, the map would be the
         target frame.
 
-    The pose publisher subscribes to the /odom topic in the node's namespace by
-    default and publishes to the /pose topic within the node's namespace by
+    The pose publisher subscribes to the odom topic in the node's namespace by
+    default and publishes to the pose topic within the node's namespace by
     default.
     """
 
@@ -33,16 +33,18 @@ class PosePublisher(Node):
         super().__init__("car_pose_publisher")
 
         # Set up node parameters.
-        self.declare_parameters(namespace=self.get_namespace(), 
+        self.declare_parameters(namespace="", 
                                 parameters=[
                                     ("source_frame", "base_link"),
                                     ("target_frame", "map"),
                                 ])
+        
+        self.declare_parameter()
         # Create local copies of the parameters.
         # TODO: Create a paramater update callback function and data structure
         # to get these parameters.
-        self.__source_frame = self.get_parameter(f"{self.get_namespace()}.source_frame").value
-        self.__target_frame = self.get_parameter(f"{self.get_namespace()}.target_frame").value
+        self.__source_frame = self.get_parameter("source_frame").value
+        self.__target_frame = self.get_parameter("target_frame").value
 
         # Create a transform listener to listen for transform messages.
         # These will be used to determine the car's localized pose.
@@ -82,7 +84,7 @@ class PosePublisher(Node):
                                                                                    source_frame=self.__source_frame,
                                                                                    time=Time())
         except Exception as exc:
-            self.get_logger().warning(f"Failed to obtain transformation from {self.__source_frame} frame to {self.__target_frame} frame needed to determine pose.")
+            self.get_logger().warning(f"Failed to obtain transformation from {self.__source_frame} frame to {self.__target_frame} frame needed to determine pose.\n{str(exc)}")
             return
         else:
             self.get_logger().debug(f"Successfully obtained transformation from {self.__source_frame} frame to {self.__target_frame} frame needed to determine pose.")
