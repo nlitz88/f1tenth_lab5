@@ -1,14 +1,12 @@
+from threading import Lock
 import rclpy
 from rclpy.node import Node
 from rclpy.time import Time
 
 import numpy as np
-from sensor_msgs.msg import LaserScan
-from ackermann_msgs.msg import AckermannDriveStamped, AckermannDrive
+from ackermann_msgs.msg import AckermannDriveStamped
 from nav_msgs.msg import Path
-from geometry_msgs.msg import Pose, PoseStamped, TransformStamped
-from tf2_ros.transform_listener import TransformListener
-from tf2_ros.buffer import Buffer
+from geometry_msgs.msg import Pose, PoseWithCovarianceStamped
 
 class PurePursuit(Node):
     """ 
@@ -65,24 +63,46 @@ class PurePursuit(Node):
         # already out there.
 
         # Set up node parameters.
-        self.declare_parameters(namespace=self.get_namespace(),
-                                parameters=[
-                                    ("lookahead_distance_m", rclpy.Parameter.Type.DOUBLE),
-                                    ("max_longitudinal_velocity_ms", rclpy.Parameter.Type.DOUBLE),
-                                    ("min_longitudinal_velocity_ms", rclpy.Parameter.Type.DOUBLE),  
-                                ])
+        # Set up local copy of parameters.
+        self.__parameters = {
+            "lookahead_distance_m": 1.0,
+            "max_longitudinal_velocity_ms": 1.0,
+            "min_longitudinal_velocity_ms": 1.0,
+            "controller_frequency_hz": 100
+        }
+        self.__parameters_lock = Lock()
+        with self.__parameters_lock:
+            self.declare_parameters(namespace=self.get_namespace(),
+                                    parameters=[(key, self.__parameters[key]) for key in list(self.__parameters.keys())])
+            
+
+            
+        # self.__lookahead_distance_m, \
+        #     self.__max_longitudinal_velocity_ms,
+        #     self.__min_longitudinal_velocity_ms,
+            
 
         # Set up timer for controlling how frequently pure pursuit commands new
         # control values.
-        self.__control_timer = self.create_timer(timer_period_sec=0.1, callback=self.__control_callback)
+        self.__control_timer = self.create_timer(timer_period_sec=1.0/,
+        callback=self.__control_callback)
+        
+        # Create a subscriber for the vehicle's pose. 
+        # TODO: Not sure if pure pursuit needs to recalculate its values every
+        # time it receives a new pose message--may be able to run this at a
+        # lower frequency. In which case, I think this subscriber would just
+        # update a synchronized variable that we maintain the pose in, and then
+        # the timer is what invokes the actual pure pursuit control logic.
+        self.__pose_subscriber = self.create_subscription(msg_type=PoseWithCovarianceStamped)
 
         # Create a drive publisher to command the resulting drive values.
         # TODO: May have to update this topic (and a number of other things)
         # depending on how these namespaces work.
         self.__drive_publisher = self.create_publisher(msg_type=AckermannDriveStamped,
-                                                       topic=f"/{self.get_namespace()}/cmd_vel")
+                                                       topic=f"/drive",
+                                                       qos_profile=10)
 
-    def get_next_target_point(self, current_pose: PoseStamped, path: Path) -> Pose:
+    def get_next_target_point(self, current_pose: PoseWithCovarianceStamped, path: Path) -> Pose:
         """Function that will take the robot's current pose in the map frame and
         determine what the next target point should be.
 
@@ -129,29 +149,9 @@ class PurePursuit(Node):
 
     def __control_callback(self) -> None:
 
-        # Attempt to get/compute current pose based on the most recently
-        # received transforms.
-
-        # Attempt to publish the pose (is this necessary?) 
-        # TODO: Question: is it commonplace to have a separate node that takes
-        # the transform and spits out a PoseStamped message? or is just expected
-        # that each node should just be computing this on its own.
-        # However, then what about visualizations?
-
-        # With the pose, call the function to compute the next target waypoint
-        # using the obtained pose.
-        try:
-            car_pose = self.__get_car_pose()
-        except Exception as exc:
-            self.get_logger().warning(f"Failed to obtain car's pose from transform")
-        else:
-            self.__pose_publisher.publish(car_pose)
-            self.get_logger().info(f"Successfully published car's pose.")
-
-        # 
         pass
 
-    def pose_callback(self, pose_msg):
+    def __pose_callback(self, pose_msg):
         pass
         # TODO: find the current waypoint to track using methods mentioned in lecture
 

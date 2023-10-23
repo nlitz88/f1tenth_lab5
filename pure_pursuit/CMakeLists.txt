@@ -43,6 +43,7 @@ install(PROGRAMS
   scripts/pure_pursuit_node.py
   scripts/clicked_point_waypoint_logger_node.py
   scripts/path_publisher_node.py
+  scripts/pose_publisher_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

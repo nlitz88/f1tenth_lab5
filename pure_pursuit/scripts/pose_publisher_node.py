@@ -51,13 +51,13 @@ class PosePublisher(Node):
 
         # Create subscriber for odometry messages.
         self.__odom_subscriber = self.create_subscription(msg_type=Odometry, 
-                                                          topic=f"/{self.get_namespace()}/odom",
+                                                          topic=f"/odom",
                                                           callback=self.__odom_callback,
                                                           qos_profile=10)
         # Create publisher we'll use to actually publish the pose obtained from
         # the transforms.
         self.__pose_publisher = self.create_publisher(msg_type=PoseWithCovarianceStamped,
-                                                      topic=f"/{self.get_namespace()}/pose",
+                                                      topic=f"/pose",
                                                       qos_profile=10)
     
     def __odom_callback(self, odom_message: Odometry) -> None:

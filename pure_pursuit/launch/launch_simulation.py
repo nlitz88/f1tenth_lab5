@@ -17,17 +17,20 @@ def generate_launch_description():
     # Create new actions to spin up nodes for the pure pursuit node and path
     # file publisher node.
     pure_pursuit_node = Node(
+        namespace="ego_racecar",
         package="pure_pursuit",
         executable="pure_pursuit_node.py",
         parameters=[simulation_params],
     )
     pose_publisher_node = Node(
+        namespace="ego_racecar",
         package="pure_pursuit",
-        executable="pose_publisher.py",
+        executable="pose_publisher_node.py",
         name="car_pose_publisher",
         parameters=[simulation_params]
     )
     path_file_publisher_node = Node(
+        namespace="ego_racecar",
         package="pure_pursuit",
         executable="path_publisher_node.py",
         name="path_publisher",
@@ -36,6 +39,7 @@ def generate_launch_description():
     )
     # Add the launch_ros "Node" actions we created.
     ld.add_action(pure_pursuit_node)
+    ld.add_action(pose_publisher_node)
     # ld.add_action(path_file_publisher_node)
 
     # Return the newly created launch description.
