@@ -1,0 +1,82 @@
+import csv
+from pure_pursuit.pure_pursuit import *
+from pure_pursuit.pure_pursuit_helpers import *
+from pure_pursuit.path_publisher_helpers import generate_path_from_file
+import unittest
+from geometry_msgs.msg import Point
+from nav_msgs.msg import Path
+
+# class TestNumpyArrayFromPath(unittest.TestCase):
+
+#     def setUp(self) -> None:
+#         """Builds up a path from the specified filepath.
+#         """
+#         self.path = generate_path_from_file(filepath=Path().cwd().parent.parent.parent/"path_files"/"levine_rough_path.csv")
+
+#     def test_shape(self):
+#         print(self.path)
+
+class TestNumpyArrayFromPath(unittest.TestCase):
+    def test_conversion(self):
+        # Create a sample Path with Pose instances
+        path = Path()
+        for i in range(5):
+            pose = Pose()
+            pose.position = Point(x=float(i), y=float(i), z=float(0))
+            path.poses.append(pose)
+
+        # Convert the Path to a NumPy array
+        result = numpy_array_from_path(path)
+
+        # Define the expected NumPy array
+        expected = np.array([[0, 0], [1, 1], [2, 2], [3, 3], [4, 4]])
+
+        # Check if the result matches the expected array
+        self.assertTrue(np.array_equal(result, expected))
+
+    def test_empty_path(self):
+        # Test with an empty Path
+        path = Path()
+        result = numpy_array_from_path(path)
+        self.assertTrue(len(result) == 0)
+
+    def test_path_with_negative_values(self):
+        # Test with a Path containing negative values
+        path = Path()
+        for i in range(-3, 4):
+            pose = Pose()
+            pose.position = Point(x=float(i), y=float(i), z=float(0))
+            path.poses.append(pose)
+        result = numpy_array_from_path(path)
+        expected = np.array([[-3, -3], [-2, -2], [-1, -1], [0, 0], [1, 1], [2, 2], [3, 3]])
+        self.assertTrue(np.array_equal(result, expected))
+
+    def test_path_with_large_values(self):
+        # Test with a Path containing large values
+        path = Path()
+        for i in range(1000, 1005):
+            pose = Pose()
+            pose.position = Point(x=float(i), y=float(i), z=float(0))
+            path.poses.append(pose)
+        result = numpy_array_from_path(path)
+        expected = np.array([[1000, 1000], [1001, 1001], [1002, 1002], [1003, 1003], [1004, 1004]])
+        self.assertTrue(np.array_equal(result, expected))
+
+    def test_path_with_float_coordinates(self):
+        # Test with a Path containing floating-point coordinates
+        path = Path()
+        for i in range(5):
+            pose = Pose()
+            x = 0.5 * i  # Using floating-point x coordinates
+            y = 1.5 * i  # Using floating-point y coordinates
+            pose.position = Point(x=x, y=y, z=0.0)
+            path.poses.append(pose)
+
+        result = numpy_array_from_path(path)
+
+        # Define the expected NumPy array with floating-point values
+        expected = np.array([[0.0, 0.0], [0.5, 1.5], [1.0, 3.0], [1.5, 4.5], [2.0, 6.0]])
+
+        # Check if the result matches the expected array
+        self.assertTrue(np.allclose(result, expected, rtol=1e-8))
+        

@@ -3,11 +3,8 @@
 from typing import Optional
 import rclpy
 from rclpy.node import Node
-from rclpy.duration import Duration
 from nav_msgs.msg import Path
-from geometry_msgs.msg import Point, Pose, PoseStamped
-
-import csv
+from pure_pursuit.path_publisher_helpers import generate_path_from_file
 
 class PathFilePublisher2D(Node):
 
@@ -22,26 +19,18 @@ class PathFilePublisher2D(Node):
             namespace="",
             parameters=[
                 ("filepath", filepath)
+                ("frame_id", "map")
             ],
             ignore_override=False
         )
         self.__filepath = self.get_parameter("filepath").value
+        self.__frame_id = self.get_parameter("frame_id").value
 
         # Before anything else: attempt to load the path from the file at the
         # specified filepath. If able to load the file, create a "Path" object
         # from the sequence of points.
         try:
-            with open(self.__filepath, 'r') as path_file:
-                csv_reader = csv.reader(path_file)
-                self.__path = Path()
-                for row in csv_reader:
-                    if len(row) == 2:
-                        point = Point(x=float(row[0]), y=float(row[1]))
-                        pose = Pose(position=point)
-                        pose_stamped = PoseStamped(pose=pose)
-                        pose_stamped.header.frame_id = "map"
-                        self.__path.poses.append(pose_stamped)
-                        self.__path.header.frame_id = "map"
+            self.__path = generate_path_from_file(filepath=self.__filepath, frame_id=self.__frame_id)
         except OSError as exc:
             self.get_logger().error(f"Failed to open path file {self.__filepath}")
             raise exc

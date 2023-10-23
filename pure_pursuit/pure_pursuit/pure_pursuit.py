@@ -9,6 +9,9 @@ from nav_msgs.msg import Path
 from geometry_msgs.msg import Pose, PoseWithCovarianceStamped
 from tf2_ros.transform_listener import TransformListener
 from tf2_ros.buffer import Buffer
+from copy import deepcopy
+
+
 
 class PurePursuit(Node):
     """ 
@@ -81,9 +84,9 @@ class PurePursuit(Node):
         self.__transform_buffer = Buffer()
         self.__transform_listener = TransformListener(buffer=self.__transform_buffer, node=self)
 
-    def get_next_target_point(self, 
-                              current_pose: PoseWithCovarianceStamped, 
-                              path: Path) -> Pose:
+    def __get_next_target_point(self, 
+                                current_pose: PoseWithCovarianceStamped, 
+                                path: Path) -> Pose:
         """Function that will take the robot's current pose in the map frame and
         determine what the next target point should be.
 
@@ -102,6 +105,7 @@ class PurePursuit(Node):
         """
         # Create a vectorized version of the (x,y) positions in the path using
         # numpy.
+        poses = np.array(path.poses)
 
         # Apply a euclidean distance elementwise across the vector of (x,y) path
         # positions.
@@ -131,9 +135,24 @@ class PurePursuit(Node):
 
     def __control_callback(self) -> None:
 
-        # TODO: find the current waypoint to track using methods mentioned in lecture.
+        # TODO: find the current waypoint to track using methods mentioned in
+        # lecture.
+        # Before anything, grab the most recent copy of the path and pose.
+        # TODO: Is there a better way of doing this? Would it be better to hold
+        # both locks through the duration of this callback? Or just grab a copy
+        # like this?
+        # NOTE: If this node isn't multithreaded by default, then there's not
+        # really a need for this--as there's only one thread and it
+        with self.__path_lock: 
+            newest_path = deepcopy(self.__path)
+        with self.__pose_lock:
+            newest_pose = deepcopy(self.__pose)
+
+        target_point = self.__get_next_target_point(current_pose=newest_pose,
+                                                    path=newest_path)
 
         # TODO: transform goal point to vehicle frame of reference
+
 
         # TODO: calculate curvature/steering angle
 
