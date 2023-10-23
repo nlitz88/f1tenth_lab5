@@ -1,4 +1,3 @@
-from threading import Lock
 import rclpy
 from rclpy.node import Node
 from rclpy.time import Time
@@ -63,28 +62,23 @@ class PurePursuit(Node):
         # already out there.
 
         # Set up node parameters.
-        # Set up local copy of parameters.
-        self.__parameters = {
-            "lookahead_distance_m": 1.0,
-            "max_longitudinal_velocity_ms": 1.0,
-            "min_longitudinal_velocity_ms": 1.0,
-            "controller_frequency_hz": 100
-        }
-        self.__parameters_lock = Lock()
-        with self.__parameters_lock:
-            self.declare_parameters(namespace=self.get_namespace(),
-                                    parameters=[(key, self.__parameters[key]) for key in list(self.__parameters.keys())])
-            
-
-            
-        # self.__lookahead_distance_m, \
-        #     self.__max_longitudinal_velocity_ms,
-        #     self.__min_longitudinal_velocity_ms,
-            
+        self.declare_parameters(namespace=self.get_namespace(),
+                                parameters=[
+                                    ("lookahead_distance_m", rclpy.Parameter.Type.DOUBLE),
+                                    ("max_longitudinal_velocity_ms", rclpy.Parameter.Type.DOUBLE),
+                                    ("min_longitudinal_velocity_ms", rclpy.Parameter.Type.DOUBLE),
+                                    ("controller_frequency_hz", 100) 
+                                ])
+        # Grab values of parameters for local use after being declared.
+        # TODO: Need to set up a parameter update callback function.
+        self.__lookahead_distance_m = self.get_parameter("lookahead_distance_m").value
+        self.__max_longitudinal_velocity_ms = self.get_parameter("max_longitudinal_velocity_ms").value
+        self.__min_longitudinal_velocity_ms = self.get_parameter("min_longitudinal_velocity_ms").value
+        self.__controller_frequency = self.get_parameter("controller_frequency").value
 
         # Set up timer for controlling how frequently pure pursuit commands new
         # control values.
-        self.__control_timer = self.create_timer(timer_period_sec=1.0/,
+        self.__control_timer = self.create_timer(timer_period_sec=1.0/float(self.__controller_frequency),
         callback=self.__control_callback)
         
         # Create a subscriber for the vehicle's pose. 
