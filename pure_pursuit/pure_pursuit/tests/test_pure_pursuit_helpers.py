@@ -137,3 +137,25 @@ class TestGetDistanceToEachPoint(unittest.TestCase):
         expected_distances = np.array([0.0, np.sqrt(25.0), np.sqrt(18)])
         distances = get_distance_to_each_point(current_position, numpy_path)
         np.testing.assert_array_almost_equal(distances, expected_distances, decimal=6)
+
+class TestSubtractLookaheadDistance(unittest.TestCase):
+    def test_subtract_lookahead_distance(self):
+        lookahead_distance = 2.0
+        distances = np.array([3.0, 4.0, 5.0, 6.0])
+        expected_result = np.array([1.0, 2.0, 3.0, 4.0])
+        result = subtract_lookahead_distance(lookahead_distance, distances)
+        np.testing.assert_array_almost_equal(result, expected_result, decimal=6)
+
+    def test_subtract_lookahead_distance_zero_lookahead(self):
+        lookahead_distance = 0.0
+        distances = np.array([3.0, 4.0, 5.0, 6.0])
+        expected_result = distances  # Subtracting 0 should not change the array.
+        result = subtract_lookahead_distance(lookahead_distance, distances)
+        np.testing.assert_array_almost_equal(result, expected_result, decimal=6)
+
+    def test_subtract_lookahead_distance_negative_distances(self):
+        lookahead_distance = 2.0
+        distances = np.array([-3.0, -4.0, -5.0, -6.0])
+        expected_result = np.array([-5.0, -6.0, -7.0, -8.0])
+        result = subtract_lookahead_distance(lookahead_distance, distances)
+        np.testing.assert_array_almost_equal(result, expected_result, decimal=6)
