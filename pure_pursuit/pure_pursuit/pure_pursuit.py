@@ -47,6 +47,10 @@ class PurePursuit(Node):
         # lower frequency. In which case, I think this subscriber would just
         # update a synchronized variable that we maintain the pose in, and then
         # the timer is what invokes the actual pure pursuit control logic.
+        # TODO: Need to look into how this is done conventionally, but I would
+        # imagine that it'd be best for this subscriber to be running in its own
+        # thread (if it's not already). Look into threading options if that's
+        # not enabled by default.
         self.__pose_subscriber = self.create_subscription(msg_type=PoseWithCovarianceStamped,
                                                           topic="pose",
                                                           callback=self.__pose_callback, 
@@ -55,6 +59,14 @@ class PurePursuit(Node):
         # obtained pose.
         self.__pose: PoseWithCovarianceStamped = None
         self.__pose_lock = Lock()
+
+        # Create a subscriber for the path as well.
+        self.__path_subscriber = self.create_subscription(msg_type=Path,
+                                                          topic="path",
+                                                          callback=self.__path_callback,
+                                                          qos_profile=10)
+        self.__path: Path = None
+        self.__path_lock = Lock()
 
         # Create a drive publisher to command the resulting drive values.
         # TODO: May have to update this topic (and a number of other things)
@@ -119,7 +131,7 @@ class PurePursuit(Node):
 
     def __control_callback(self) -> None:
 
-        # TODO: find the current waypoint to track using methods mentioned in lecture
+        # TODO: find the current waypoint to track using methods mentioned in lecture.
 
         # TODO: transform goal point to vehicle frame of reference
 
@@ -130,11 +142,23 @@ class PurePursuit(Node):
         pass
 
     def __pose_callback(self, new_pose: PoseWithCovarianceStamped) -> None:
-
-        # Store the most recent pose.
+        """Callback to store the most recently received pose message.
+        
+        Args:
+            new_pose (PoseWithCovarianceStamped): Pose received by pose
+            subscriber.
+        """
         with self.__pose_lock:
             self.__pose = new_pose
-        self.get_logger().info("Received new pose")
+
+    def __path_callback(self, new_path: Path) -> None:
+        """Callback to store the most recently received path message.
+
+        Args:
+            new_path (Path): Path received by path subscriber.
+        """
+        with self.__path_lock:
+            self.__path = new_path
 
 def main(args=None):
     rclpy.init(args=args)

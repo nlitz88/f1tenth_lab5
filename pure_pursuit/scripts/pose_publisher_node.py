@@ -84,8 +84,6 @@ class PosePublisher(Node):
         except Exception as exc:
             self.get_logger().warning(f"Failed to obtain transformation from {self.__source_frame} frame to {self.__target_frame} frame needed to determine pose.\n{str(exc)}")
             return
-        else:
-            self.get_logger().debug(f"Successfully obtained transformation from {self.__source_frame} frame to {self.__target_frame} frame needed to determine pose.")
         # 2. If transform successfully obtained, build up the new
         #    PoseWithCovarianceStamped message.
         new_pose = PoseWithCovarianceStamped()

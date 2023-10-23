@@ -51,7 +51,7 @@ class PathFilePublisher2D(Node):
         # latch it so that any time a node subscribes, it'll get the latest path
         # published.
         self.__path_publisher = self.create_publisher(msg_type=Path, 
-                                                      topic="/path_from_file", 
+                                                      topic="path", 
                                                       qos_profile=10)
 
         # Create a timer that will generate interrupts to trigger the publisher.
@@ -67,7 +67,6 @@ class PathFilePublisher2D(Node):
         """Publishes the internal copy of the path loaded from file earlier.
         """
         self.__path_publisher.publish(self.__path)
-        self.get_logger().info(f"Published path")
 
 def main(args=None):
     rclpy.init(args=args)
