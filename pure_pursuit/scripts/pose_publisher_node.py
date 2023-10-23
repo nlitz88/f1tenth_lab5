@@ -38,8 +38,6 @@ class PosePublisher(Node):
                                     ("source_frame", "base_link"),
                                     ("target_frame", "map"),
                                 ])
-        
-        self.declare_parameter()
         # Create local copies of the parameters.
         # TODO: Create a paramater update callback function and data structure
         # to get these parameters.
