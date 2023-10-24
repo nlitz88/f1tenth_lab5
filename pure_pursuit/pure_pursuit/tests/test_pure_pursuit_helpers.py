@@ -155,27 +155,107 @@ class TestGetDistanceToEachPoint(unittest.TestCase):
         distances = get_distance_to_each_point(current_position, numpy_path)
         np.testing.assert_array_almost_equal(distances, expected_distances, decimal=6)
 
-class TestSubtractLookaheadDistance(unittest.TestCase):
-    def test_subtract_lookahead_distance(self):
-        lookahead_distance = 2.0
-        distances = np.array([3.0, 4.0, 5.0, 6.0])
-        expected_result = np.array([1.0, 2.0, 3.0, 4.0])
-        result = subtract_lookahead_distance(lookahead_distance, distances)
-        np.testing.assert_array_almost_equal(result, expected_result, decimal=6)
+# class TestSubtractLookaheadDistance(unittest.TestCase):
+#     def test_subtract_lookahead_distance(self):
+#         lookahead_distance = 2.0
+#         distances = np.array([3.0, 4.0, 5.0, 6.0])
+#         expected_result = np.array([1.0, 2.0, 3.0, 4.0])
+#         result = subtract_lookahead_distance(lookahead_distance, distances)
+#         np.testing.assert_array_almost_equal(result, expected_result, decimal=6)
 
-    def test_subtract_lookahead_distance_zero_lookahead(self):
+#     def test_subtract_lookahead_distance_zero_lookahead(self):
+#         lookahead_distance = 0.0
+#         distances = np.array([3.0, 4.0, 5.0, 6.0])
+#         expected_result = distances  # Subtracting 0 should not change the array.
+#         result = subtract_lookahead_distance(lookahead_distance, distances)
+#         np.testing.assert_array_almost_equal(result, expected_result, decimal=6)
+
+#     def test_subtract_lookahead_distance_negative_distances(self):
+#         lookahead_distance = 2.0
+#         distances = np.array([-3.0, -4.0, -5.0, -6.0])
+#         expected_result = np.array([-5.0, -6.0, -7.0, -8.0])
+#         result = subtract_lookahead_distance(lookahead_distance, distances)
+#         np.testing.assert_array_almost_equal(result, expected_result, decimal=6)
+
+
+class TestNormalizeDistances(unittest.TestCase):
+
+    def test_normalize_distances_positive(self):
+        # Test with positive lookahead distance and positive distances
+        lookahead_distance = 2.0
+        distances = np.array([3.0, 4.0, 5.0])
+        result = normalize_distances(lookahead_distance, distances)
+        expected_result = np.array([1.0, 2.0, 3.0])
+        np.testing.assert_array_almost_equal(result, expected_result)
+
+    def test_normalize_distances_zero_lookahead(self):
+        # Test with zero lookahead distance and positive distances
         lookahead_distance = 0.0
-        distances = np.array([3.0, 4.0, 5.0, 6.0])
-        expected_result = distances  # Subtracting 0 should not change the array.
-        result = subtract_lookahead_distance(lookahead_distance, distances)
-        np.testing.assert_array_almost_equal(result, expected_result, decimal=6)
+        distances = np.array([3.0, 4.0, 5.0])
+        result = normalize_distances(lookahead_distance, distances)
+        expected_result = np.array([3.0, 4.0, 5.0])
+        np.testing.assert_array_almost_equal(result, expected_result)
 
-    def test_subtract_lookahead_distance_negative_distances(self):
+    def test_normalize_distances_negative(self):
+        # Test with negative lookahead distance and positive distances
+        lookahead_distance = -2.0
+        distances = np.array([3.0, 4.0, 5.0])
+        result = normalize_distances(lookahead_distance, distances)
+        expected_result = np.array([5.0, 6.0, 7.0])
+        np.testing.assert_array_almost_equal(result, expected_result)
+
+    def test_normalize_distances_empty_array(self):
+        # Test with an empty input array
         lookahead_distance = 2.0
-        distances = np.array([-3.0, -4.0, -5.0, -6.0])
-        expected_result = np.array([-5.0, -6.0, -7.0, -8.0])
-        result = subtract_lookahead_distance(lookahead_distance, distances)
-        np.testing.assert_array_almost_equal(result, expected_result, decimal=6)
+        distances = np.array([])
+        result = normalize_distances(lookahead_distance, distances)
+        expected_result = np.array([])
+        np.testing.assert_array_almost_equal(result, expected_result)
+
+    def test_normalize_distances_positive_large(self):
+        # Test with positive lookahead distance and large positive distances
+        lookahead_distance = 100.0
+        distances = np.array([1000.0, 2000.0, 3000.0, 4000.0])
+        result = normalize_distances(lookahead_distance, distances)
+        expected_result = np.array([900.0, 1900.0, 2900.0, 3900.0])
+        np.testing.assert_array_almost_equal(result, expected_result)
+
+    def test_normalize_distances_negative_large(self):
+        # Test with negative lookahead distance and large positive distances
+        lookahead_distance = -500.0
+        distances = np.array([10000.0, 15000.0, 20000.0, 25000.0])
+        result = normalize_distances(lookahead_distance, distances)
+        expected_result = np.array([10500.0, 15500.0, 20500.0, 25500.0])
+        np.testing.assert_array_almost_equal(result, expected_result)
+
+    def test_normalize_distances_zero_lookahead_large(self):
+        # Test with zero lookahead distance and large positive distances
+        lookahead_distance = 0.0
+        distances = np.array([1000000.0, 2000000.0, 3000000.0, 4000000.0])
+        result = normalize_distances(lookahead_distance, distances)
+        expected_result = np.array([1000000.0, 2000000.0, 3000000.0, 4000000.0])
+        np.testing.assert_array_almost_equal(result, expected_result)
+
+    def test_normalize_distances_positive_long(self):
+        # Test with positive lookahead distance and a longer array of positive distances
+        lookahead_distance = 5.0
+        distances = np.array([10.0, 12.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0,
+                              55.0, 60.0, 65.0, 70.0, 75.0, 80.0, 85.0, 90.0, 100.0])
+        result = normalize_distances(lookahead_distance, distances)
+        expected_result = np.array([5.0, 7.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0,
+                                   50.0, 55.0, 60.0, 65.0, 70.0, 75.0, 80.0, 85.0, 95.0])
+        np.testing.assert_array_almost_equal(result, expected_result)
+
+    def test_normalize_distances_negative_long(self):
+        # Test with negative lookahead distance and a longer array of positive distances
+        lookahead_distance = -7.0
+        distances = np.array([10.0, 12.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0,
+                              55.0, 60.0, 65.0, 70.0, 75.0, 80.0, 85.0, 90.0, 100.0])
+        result = normalize_distances(lookahead_distance, distances)
+        expected_result = np.array([17.0, 19.0, 22.0, 27.0, 32.0, 37.0, 42.0, 47.0, 52.0, 57.0,
+                                   62.0, 67.0, 72.0, 77.0, 82.0, 87.0, 92.0, 97.0, 107.0])
+        np.testing.assert_array_almost_equal(result, expected_result)
+
 
 class TestGetDistancesAfterIndex(unittest.TestCase):
 
@@ -225,11 +305,11 @@ class TestGetDistancesAfterIndex(unittest.TestCase):
 class TestGetSmallestIndex(unittest.TestCase):
 
     def test_get_smallest_index(self):
-        # Create a numpy array representing waypoints
-        numpy_path = np.array([3, 1, 4, 1, 5, 9, 2])
+        # Create a numpy array representing distances
+        distances = np.array([3, 1, 4, 1, 5, 9, 2])
 
         # Call the function
-        result = get_smallest_index(numpy_path)
+        result = get_smallest_index(distances)
 
         # Define the expected result
         expected_result = 1  # The smallest element (1) first appears at index 1
@@ -239,10 +319,10 @@ class TestGetSmallestIndex(unittest.TestCase):
 
     def test_get_smallest_index_identical_elements(self):
         # Create a numpy array with identical smallest elements
-        numpy_path = np.array([2, 2, 2, 2, 2])
+        distances = np.array([2, 2, 2, 2, 2])
 
         # Call the function
-        result = get_smallest_index(numpy_path)
+        result = get_smallest_index(distances)
 
         # Define the expected result
         expected_result = 0  # The smallest element (2) first appears at index 0
@@ -252,6 +332,6 @@ class TestGetSmallestIndex(unittest.TestCase):
 
     def test_get_smallest_index_empty_array(self):
         # Test with an empty input array
-        numpy_path = np.array([])
+        distances = np.array([])
         with self.assertRaises(ValueError):
-            get_smallest_index(numpy_path)
+            get_smallest_index(distances)

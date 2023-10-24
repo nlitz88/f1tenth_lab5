@@ -62,9 +62,10 @@ def get_distance_to_each_point(current_position: np.ndarray,
     """
     return np.apply_along_axis(euclidean_distance, 1, numpy_path, current_position)
 
-def subtract_lookahead_distance(lookahead_distance_m: float, distances_m: np.ndarray) -> np.ndarray:
-    """Subtracts the lookahead distance from each element in distances. I.e.,
-    just a simple wrapper for element-wise subtraction.
+def normalize_distances(lookahead_distance_m: float, distances_m: np.ndarray) -> np.ndarray:
+    """Subtracts the lookahead distance from each element in distances and then
+    takes the absolute value. I.e., just a simple wrapper for element-wise
+    subtraction and absolute value.
 
     Args:
         lookahead_distance_m (float): The distance to be subtracted from each
@@ -72,10 +73,10 @@ def subtract_lookahead_distance(lookahead_distance_m: float, distances_m: np.nda
         distances_m (np.ndarray): The array of distances.
 
     Returns:
-        np.ndarray: The "normalized" distances. I.e., the distances with the
-        lookahead distance subtracted from each.
+        np.ndarray: The "normalized" distances. I.e., the absolute value of the
+        distances with the lookahead distance subtracted from each.
     """
-    return np.subtract(distances_m, lookahead_distance_m)
+    return np.abs(np.subtract(distances_m, lookahead_distance_m))
 
 def get_distances_after_index(distances: np.ndarray, index: int) -> np.ndarray:
     """Returns a view (slice) of the provided distances starting at one past
@@ -93,19 +94,19 @@ def get_distances_after_index(distances: np.ndarray, index: int) -> np.ndarray:
     return distances[index+1:]
     
 
-def get_smallest_index(numpy_path: np.ndarray) -> int:
-    """Returns the index of the smallest element in the provided path. Note that
-    if there are identical elements that are both the smallest, this returns the
-    index of the first instance of that smallest value.
+def get_smallest_index(distances: np.ndarray) -> int:
+    """Returns the index of the smallest distance in the provided array. Note
+    that if there are identical elements that are both the smallest, this
+    returns the index of the first instance of that smallest value.
 
     Args:
-        numpy_path (np.ndarray): The ndarray of waypoints the smallest will be
+        distances (np.ndarray): The ndarray of distances the smallest will be
         found in.
 
     Returns:
-        int: The index of the smallest element found.
+        int: The index of the smallest distance found.
     """
-    return np.argmin(numpy_path)
+    return np.argmin(distances)
 
 
 # NOTE: This function is like the integration of each step / smaller function.
@@ -114,7 +115,8 @@ def get_smallest_index(numpy_path: np.ndarray) -> int:
 # integration test them.
 
 def get_next_target_point(current_pose: PoseWithCovarianceStamped, 
-                          path: Path) -> Pose:
+                          path: Path,
+                          lookahead_distance_m: float) -> Pose:
     """Function that will take the robot's current pose in the map frame and
     determine what the next target point should be.
 
@@ -143,6 +145,7 @@ def get_next_target_point(current_pose: PoseWithCovarianceStamped,
 
     # Find the point on the path that is currently closest to the current pose.
     # I.e., the point whose distance is the smallest.
+    closest_index = get_smallest_index(distances=distances)
 
     # Next, we want to find which point AFTER the closest point in our path
     # (sequentially) is the closest to being one lookahead distance away from
@@ -150,13 +153,17 @@ def get_next_target_point(current_pose: PoseWithCovarianceStamped,
     # 
     # To do this, first get a view of the path with only the elements of the
     # path that come after the point closest to the car.
+    distances_after_closest_m = get_distances_after_index(distances=distances, 
+                                                          index=closest_index)
 
     # Next, subtract the lookahead distance from each of these
     # points--"normalizing" them.
+    normalized_distances_m = normalize_distances(lookahead_distance_m=lookahead_distance_m,
+                                                 distances_m=distances_after_closest_m)
 
     # Finally, select the point with the smallest value among them--this is the
     # node whose distance is closest to one lookahead distance away.
-
+    
 
 
     # NOTE: Other potential problems I'm thinking of:
