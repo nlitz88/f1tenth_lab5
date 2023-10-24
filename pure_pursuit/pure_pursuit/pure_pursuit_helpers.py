@@ -14,6 +14,18 @@ def numpy_array_from_path(path: Path) -> np.ndarray:
     """
     return np.array([[float(pose.position.x), float(pose.position.y)] for pose in path.poses])
 
+def numpy_position_from_pose(pose: Pose) -> np.ndarray:
+    """Helper function to extract the position from the provided pose as a 1D
+    numpy ndarray. I.e., given a Pose, returns an ndarray like [x, y].
+
+    Args:
+        pose (Pose): Pose instance position will be extracted from.
+
+    Returns:
+        np.ndarray: 2D position extracted from provided pose as ndarray([x, y]).
+    """
+    return np.array([pose.position.x, pose.position.y])
+
 def euclidean_distance(vector_a: np.ndarray, vector_b: np.ndarray) -> float:
     """Tiny helper function to compute euclidean distance using numpy.
     Fast method found on
@@ -27,7 +39,7 @@ def euclidean_distance(vector_a: np.ndarray, vector_b: np.ndarray) -> float:
     """
     return np.linalg.norm(vector_a-vector_b)
 
-def get_distance_to_each_point(current_position: Tuple[float, float], 
+def get_distance_to_each_point(current_position: np.ndarray, 
                                numpy_path: np.ndarray) -> np.ndarray:
     """Given your current 2D position in a given frame of reference and a numpy
     array of 2D positions in that same frame that describe a path (a sequence of
@@ -103,25 +115,21 @@ def get_next_target_point(current_pose: PoseWithCovarianceStamped,
         Pose: The point in the path chosen as the next target point.
     """
     # Create a vectorized version of the (x,y) positions in the path using
-    # numpy.
-    poses = np.array(path.poses)
+    # numpy. Also extract the position from the current pose as an ndarray.
+    numpy_path = numpy_array_from_path(path=path)
+    current_position = numpy_position_from_pose(pose=current_pose.pose.pose)
 
     # Apply a euclidean distance elementwise across the vector of (x,y) path
     # positions.
+    distances = get_distance_to_each_point(current_position=current_position, 
+                                           numpy_path=numpy_path)
 
-    # Find the point that is closest to the current pose. We'll start our
-    # search for the point closest to the lookahead distance from this
-    # point.
+    # Find the point on the path that is currently closest to the current pose.
+    # I.e., the point whose distance is the smallest.
 
-    # NOTE: Could stop here. In the simplest implementation of pure pursuit
-    # (I.e., I think the approach taken in the original paper), the closest
-    # point is used as the next target point. SO, if all else fails, could take
-    # the index found as the smallest at this point and use that point as the
-    # next target.
-
-    # Next, to improve our controller, we want to find which point AFTER the
-    # closest point in our path (sequentially) is the closest to being one
-    # lookahead distance away from the car.
+    # Next, we want to find which point AFTER the closest point in our path
+    # (sequentially) is the closest to being one lookahead distance away from
+    # the car.
     # 
     # To do this, first get a view of the path with only the elements of the
     # path that come after the point closest to the car.
@@ -131,6 +139,7 @@ def get_next_target_point(current_pose: PoseWithCovarianceStamped,
 
     # Finally, select the point with the smallest value among them--this is the
     # node whose distance is closest to one lookahead distance away.
+
 
 
     # NOTE: Other potential problems I'm thinking of:

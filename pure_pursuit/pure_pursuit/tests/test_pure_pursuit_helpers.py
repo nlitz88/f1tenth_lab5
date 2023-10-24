@@ -79,6 +79,23 @@ class TestNumpyArrayFromPath(unittest.TestCase):
 
         # Check if the result matches the expected array
         self.assertTrue(np.allclose(result, expected, rtol=1e-8))
+
+class TestNumpyPositionFromPose(unittest.TestCase):
+
+    def test_numpy_position_from_pose(self):
+        # Create a Pose instance
+        pose = Pose()
+        pose.position.x = 1.0
+        pose.position.y = 2.0
+
+        # Call the function
+        result = numpy_position_from_pose(pose)
+
+        # Define the expected result as a numpy ndarray
+        expected_result = np.array([1.0, 2.0])
+
+        # Assert that the result matches the expected result
+        np.testing.assert_array_equal(result, expected_result)
         
 class TestEuclideanDistance(unittest.TestCase):
     def test_euclidean_distance_same_vector(self):
