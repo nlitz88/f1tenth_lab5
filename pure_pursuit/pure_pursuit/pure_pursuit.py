@@ -11,7 +11,7 @@ from tf2_ros.transform_listener import TransformListener
 from tf2_ros.buffer import Buffer
 from copy import deepcopy
 
-from pure_pursuit.pure_pursuit_helpers import get_next_target_point
+from pure_pursuit.pure_pursuit_helpers import get_next_target_point, compute_steering_angle
 
 class PurePursuit(Node):
     """ 
@@ -167,12 +167,12 @@ class PurePursuit(Node):
         # path. Until I'm done preparing for the peer review, write and unit
         # test the function that computes the steering angle once we have that
         # transformed point.
-        target_pose_in_car_frame = self.__transform_buffer.transform(object_stamped=target_pose,
+        target_pose_in_car_frame: PoseStamped = self.__transform_buffer.transform(object_stamped=target_pose,
                                                                      target_frame=self.__car_frame)
 
 
         # TODO: calculate curvature/steering angle
-
+        steering_angle = compute_steering_angle(target_point_y=target_pose_in_car_frame.pose.position.y)
 
 
         # TODO: publish drive message, don't forget to limit the steering angle.
