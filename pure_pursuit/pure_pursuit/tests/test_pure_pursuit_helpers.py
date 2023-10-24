@@ -292,3 +292,92 @@ class TestGetSmallestIndex(unittest.TestCase):
         distances = np.array([])
         with self.assertRaises(ValueError):
             get_smallest_index(distances)
+
+class TestGetNextTargetPoint(unittest.TestCase):
+    def test_basic_usage(self):
+        # Create a simple path with a few points.
+        path = Path()
+        pose1 = Pose()
+        pose1.position.x = 0.0
+        pose1.position.y = 0.0
+        path.poses.append(pose1)
+        pose2 = Pose()
+        pose2.position.x = 1.0
+        pose2.position.y = 0.0
+        path.poses.append(pose2)
+        pose3 = Pose()
+        pose3.position.x = 2.0
+        pose3.position.y = 0.0
+        path.poses.append(pose3)
+
+        # Set the lookahead distance to 0.5 (halfway between pose1 and pose2).
+        lookahead_distance = 0.6
+
+        # Set the current pose to be at the origin.
+        current_pose = PoseWithCovarianceStamped()
+        current_pose.pose.pose.position.x = 0.0
+        current_pose.pose.pose.position.y = 0.0
+
+        # Get the next target point.
+        target_point = get_next_target_point(current_pose, path, lookahead_distance)
+
+        # The expected result is pose2 since it's the closest point to the lookahead distance.
+        self.assertEqual(target_point.position.x, pose2.position.x)
+        self.assertEqual(target_point.position.y, pose2.position.y)
+
+    def test_empty_path(self):
+        # Test with an empty path. The function should raise an exception.
+        path = Path()
+        lookahead_distance = 1.0
+        current_pose = PoseWithCovarianceStamped()
+        current_pose.pose.pose.position.x = 0.0
+        current_pose.pose.pose.position.y = 0.0
+
+        with self.assertRaises(IndexError):
+            get_next_target_point(current_pose, path, lookahead_distance)
+
+    def test_lookahead_beyond_path(self):
+        # Test with a lookahead distance larger than the path length.
+        # The function should return the last point in the path.
+        path = Path()
+        pose1 = Pose()
+        pose1.position.x = 0.0
+        pose1.position.y = 0.0
+        path.poses.append(pose1)
+        pose2 = Pose()
+        pose2.position.x = 1.0
+        pose2.position.y = 0.0
+        path.poses.append(pose2)
+        lookahead_distance = 5.0
+        current_pose = PoseWithCovarianceStamped()
+        current_pose.pose.pose.position.x = 0.0
+        current_pose.pose.pose.position.y = 0.0
+
+        target_point = get_next_target_point(current_pose, path, lookahead_distance)
+
+        self.assertEqual(target_point.position.x, pose2.position.x)
+        self.assertEqual(target_point.position.y, pose2.position.y)
+    
+    def test_lookahead_within_path(self):
+        # Create a long path with 100 poses.
+        path = Path()
+        for i in range(100):
+            pose = Pose()
+            pose.position.x = float(i)
+            pose.position.y = 0.0
+            path.poses.append(pose)
+
+        # Set the lookahead distance to a value within the path length.
+        lookahead_distance = 30.0
+
+        # Set the current pose to be closer to the beginning of the path.
+        current_pose = PoseWithCovarianceStamped()
+        current_pose.pose.pose.position.x = 10.0
+        current_pose.pose.pose.position.y = 0.0
+
+        # Get the next target point.
+        target_point = get_next_target_point(current_pose, path, lookahead_distance)
+
+        # The expected result is a point approximately 30 units ahead of the current pose.
+        self.assertAlmostEqual(target_point.position.x, 40.0, delta=0.01)
+        self.assertEqual(target_point.position.y, 0.0)

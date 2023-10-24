@@ -144,11 +144,10 @@ def get_next_target_point(current_pose: PoseWithCovarianceStamped,
     # positions.
     distances = get_distance_to_each_point(current_position=current_position, 
                                            numpy_path=numpy_path)
-
     # Find the point on the path that is currently closest to the current pose.
     # I.e., the point whose distance is the smallest.
-    closest_index = get_smallest_index(distances=distances)
 
+    closest_index = get_smallest_index(distances=distances)
     # Next, we want to find which point AFTER the closest point in our path
     # (sequentially) is the closest to being one lookahead distance away from
     # the car.
@@ -178,8 +177,7 @@ def get_next_target_point(current_pose: PoseWithCovarianceStamped,
 
     # Return the pose from the path that corresponds to this target point index.
     # This will be the computed target point index offset by the closest index.
-    return path.poses[closest_index+1+target_point_index]
-
+    return path.poses[closest_index+target_point_index]
 
     # NOTE: Other potential problems I'm thinking of:
     # 1. Our path is a loop, really. Therefore, if at the start of the path,
@@ -231,5 +229,3 @@ def get_next_target_point(current_pose: PoseWithCovarianceStamped,
     #   car with a planned path around the track, but if a button is pressed to
     #   finish the race or something, then it could place the goal pose right
     #   after the finish line and stop right after that, for instance.
-    
-    pass
