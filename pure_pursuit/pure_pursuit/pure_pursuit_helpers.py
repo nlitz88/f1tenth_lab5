@@ -78,20 +78,19 @@ def normalize_distances(lookahead_distance_m: float, distances_m: np.ndarray) ->
     """
     return np.abs(np.subtract(distances_m, lookahead_distance_m))
 
-def get_distances_after_index(distances: np.ndarray, index: int) -> np.ndarray:
-    """Returns a view (slice) of the provided distances starting at one past
-    the provided index. I.e., all the elements in the distances after the
-    element at index (not including the element at index).
+def get_distances_starting_at_index(distances: np.ndarray, index: int) -> np.ndarray:
+    """Returns a view (slice) of the provided distances starting at the provided
+    index.
 
     Args:
         numpy_path (np.ndarray): The array of distances.
-        index (int): The index that the slice/view will start immediately after.
+        index (int): The index that the slice/view will start with.
 
     Returns:
-        np.ndarray: The array of elements in distances sequentially beyond/after
-        the provided index.
+        np.ndarray: The array of elements in distances from the given index and
+        beyond.
     """
-    return distances[index+1:]
+    return distances[index:]
     
 
 def get_smallest_index(distances: np.ndarray) -> int:
@@ -118,7 +117,10 @@ def get_next_target_point(current_pose: PoseWithCovarianceStamped,
                           path: Path,
                           lookahead_distance_m: float) -> Pose:
     """Function that will take the robot's current pose in the map frame and
-    determine what the next target point should be.
+    determine what the next target point should be according to the original
+    pure pursuit paper.
+    https://www.ri.cmu.edu/pub_files/pub3/coulter_r_craig_1992_1/coulter_r_craig_1992_1.pdf
+    
 
     Specifically, this implementation looks at which point in the path array
     is closest the lookahead distance away from the vehicle sequentially
@@ -153,8 +155,17 @@ def get_next_target_point(current_pose: PoseWithCovarianceStamped,
     # 
     # To do this, first get a view of the path with only the elements of the
     # path that come after the point closest to the car.
-    distances_after_closest_m = get_distances_after_index(distances=distances, 
-                                                          index=closest_index)
+    # distances_after_closest_m = get_distances_after_index(distances=distances, 
+    #                                                       index=closest_index)
+    # TODO: Shouldn't we actually be including that closest point? What if we
+    # have very sparse waypoints and the closest point happens to be the best
+    # shot we've got? Unless this might (with sparse waypoints) cause the robot
+    # to turn back and steer towards the closest point behind it? In the
+    # original paper, they include this point. Maybe the rule should be that the
+    # lookahead distance needs to be > than the largest euclidean distance
+    # between consecutive points?
+    distances_after_closest_m = get_distances_starting_at_index(distances=distances, 
+                                                                index=closest_index)
 
     # Next, subtract the lookahead distance from each of these
     # points--"normalizing" them.
@@ -163,7 +174,11 @@ def get_next_target_point(current_pose: PoseWithCovarianceStamped,
 
     # Finally, select the point with the smallest value among them--this is the
     # node whose distance is closest to one lookahead distance away.
-    
+    target_point_index = get_smallest_index(distances=normalized_distances_m)
+
+    # Return the pose from the path that corresponds to this target point index.
+    # This will be the computed target point index offset by the closest index.
+    return path.poses[closest_index+1+target_point_index]
 
 
     # NOTE: Other potential problems I'm thinking of:

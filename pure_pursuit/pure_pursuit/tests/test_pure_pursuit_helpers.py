@@ -155,29 +155,6 @@ class TestGetDistanceToEachPoint(unittest.TestCase):
         distances = get_distance_to_each_point(current_position, numpy_path)
         np.testing.assert_array_almost_equal(distances, expected_distances, decimal=6)
 
-# class TestSubtractLookaheadDistance(unittest.TestCase):
-#     def test_subtract_lookahead_distance(self):
-#         lookahead_distance = 2.0
-#         distances = np.array([3.0, 4.0, 5.0, 6.0])
-#         expected_result = np.array([1.0, 2.0, 3.0, 4.0])
-#         result = subtract_lookahead_distance(lookahead_distance, distances)
-#         np.testing.assert_array_almost_equal(result, expected_result, decimal=6)
-
-#     def test_subtract_lookahead_distance_zero_lookahead(self):
-#         lookahead_distance = 0.0
-#         distances = np.array([3.0, 4.0, 5.0, 6.0])
-#         expected_result = distances  # Subtracting 0 should not change the array.
-#         result = subtract_lookahead_distance(lookahead_distance, distances)
-#         np.testing.assert_array_almost_equal(result, expected_result, decimal=6)
-
-#     def test_subtract_lookahead_distance_negative_distances(self):
-#         lookahead_distance = 2.0
-#         distances = np.array([-3.0, -4.0, -5.0, -6.0])
-#         expected_result = np.array([-5.0, -6.0, -7.0, -8.0])
-#         result = subtract_lookahead_distance(lookahead_distance, distances)
-#         np.testing.assert_array_almost_equal(result, expected_result, decimal=6)
-
-
 class TestNormalizeDistances(unittest.TestCase):
 
     def test_normalize_distances_positive(self):
@@ -256,51 +233,31 @@ class TestNormalizeDistances(unittest.TestCase):
                                    62.0, 67.0, 72.0, 77.0, 82.0, 87.0, 92.0, 97.0, 107.0])
         np.testing.assert_array_almost_equal(result, expected_result)
 
+class TestGetDistancesStartingAtIndex(unittest.TestCase):
 
-class TestGetDistancesAfterIndex(unittest.TestCase):
+    def test_get_distances_after_index_short_array(self):
+        # Test with a short input array and index 1
+        distances = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
+        index = 1
+        result = get_distances_starting_at_index(distances, index)
+        expected_result = np.array([2.0, 3.0, 4.0, 5.0])
+        np.testing.assert_array_almost_equal(result, expected_result)
 
-    def test_get_distances_after_index(self):
-        # Create a numpy array representing a path
-        numpy_path = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]])
-
-        # Specify the index from which you want the distances after
+    def test_get_distances_after_index_long_array(self):
+        # Test with a longer input array and index 2
+        distances = np.array([0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0])
         index = 2
-
-        # Call the function
-        result = get_distances_after_index(numpy_path, index)
-
-        # Define the expected result as a numpy array
-        expected_result = np.array([[7, 8], [9, 10]])
-
-        # Assert that the result matches the expected result
-        np.testing.assert_array_equal(result, expected_result)
+        result = get_distances_starting_at_index(distances, index)
+        expected_result = np.array([1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0])
+        np.testing.assert_array_almost_equal(result, expected_result)
 
     def test_get_distances_after_index_empty_array(self):
-        numpy_path = np.array([])
+        # Test with an empty input array and index 0
+        distances = np.array([])
         index = 0
-        result = get_distances_after_index(numpy_path, index)
+        result = get_distances_starting_at_index(distances, index)
         expected_result = np.array([])
-        np.testing.assert_array_equal(result, expected_result)
-    
-    def test_get_distances_after_index_end_of_array(self):
-        numpy_path = np.array([[1, 2], [3, 4], [5, 6]])
-        index = len(numpy_path) - 1
-        result = get_distances_after_index(numpy_path, index)
-        expected_result = np.empty(shape=(0,2))
-        np.testing.assert_array_equal(result, expected_result) 
-
-    def test_get_distances_after_index_negative_index(self):
-        numpy_path = np.array([[1, 2], [3, 4], [5, 6]])
-        index = -1
-        result = get_distances_after_index(numpy_path, index)
-        expected_result = np.array([[1, 2], [3, 4], [5, 6]])
-        np.testing.assert_array_equal(result, expected_result)
-
-    def test_get_distances_after_index_index_out_of_bounds(self):
-        numpy_path = np.array([[1, 2], [3, 4], [5, 6]])
-        index = 5
-        result = get_distances_after_index(numpy_path, index)
-        self.assertEqual(len(result), 0)
+        np.testing.assert_array_almost_equal(result, expected_result)
 
 class TestGetSmallestIndex(unittest.TestCase):
 
