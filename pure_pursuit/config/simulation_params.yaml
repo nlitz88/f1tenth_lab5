@@ -7,6 +7,8 @@ pure_pursuit:
     lookahead_distance_m: 1.0
     max_longitudinal_velocity_ms: 1.0
     min_longitudinal_velocity_ms: 1.0
+    car_frame: "ego_racecar/base_link"
+    map_frame: "map"
   
 car_pose_publisher:
   ros__parameters:

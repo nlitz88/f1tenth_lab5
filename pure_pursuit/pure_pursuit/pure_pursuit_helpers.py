@@ -1,7 +1,7 @@
 from typing import Tuple
 import numpy as np
 from nav_msgs.msg import Path
-from geometry_msgs.msg import Pose, PoseWithCovarianceStamped
+from geometry_msgs.msg import Pose, PoseStamped, PoseWithCovarianceStamped
 
 def numpy_array_from_path(path: Path) -> np.ndarray:
     """Takes a Path object and returns a 2D numpy array 
@@ -115,7 +115,7 @@ def get_smallest_index(distances: np.ndarray) -> int:
 
 def get_next_target_point(current_pose: PoseWithCovarianceStamped, 
                           path: Path,
-                          lookahead_distance_m: float) -> Pose:
+                          lookahead_distance_m: float) -> PoseStamped:
     """Function that will take the robot's current pose in the map frame and
     determine what the next target point should be according to the original
     pure pursuit paper.
@@ -133,7 +133,7 @@ def get_next_target_point(current_pose: PoseWithCovarianceStamped,
         frame as well.
 
     Returns:
-        Pose: The point in the path chosen as the next target point.
+        PoseStamped: The point in the path chosen as the next target point.
     """
     # Create a vectorized version of the (x,y) positions in the path using
     # numpy. Also extract the position from the current pose as an ndarray.

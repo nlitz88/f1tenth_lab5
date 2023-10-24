@@ -11,7 +11,7 @@ from tf2_ros.transform_listener import TransformListener
 from tf2_ros.buffer import Buffer
 from copy import deepcopy
 
-
+from pure_pursuit.pure_pursuit_helpers import get_next_target_point
 
 class PurePursuit(Node):
     """ 
@@ -27,7 +27,9 @@ class PurePursuit(Node):
                                     ("lookahead_distance_m", rclpy.Parameter.Type.DOUBLE),
                                     ("max_longitudinal_velocity_ms", rclpy.Parameter.Type.DOUBLE),
                                     ("min_longitudinal_velocity_ms", rclpy.Parameter.Type.DOUBLE),
-                                    ("controller_frequency_hz", 100)
+                                    ("controller_frequency_hz", 100),
+                                    ("car_frame", "base_link"),
+                                    ("map_frame", "map")
                                     # MAY HAVE TO ADD PARAMETERS FOR CAR_FRAME
                                     # AND MAP_FRAME or something like that here
                                     # for the transformation in step 2.
@@ -38,6 +40,8 @@ class PurePursuit(Node):
         self.__max_longitudinal_velocity_ms = self.get_parameter("max_longitudinal_velocity_ms").value
         self.__min_longitudinal_velocity_ms = self.get_parameter("min_longitudinal_velocity_ms").value
         self.__controller_frequency = self.get_parameter("controller_frequency_hz").value
+        self.__car_frame = self.get_parameter("car_frame").value
+        self.__map_frame = self.get_parameter("map_frame").value
 
         # Set up timer for controlling how frequently pure pursuit commands new
         # control values.
@@ -84,38 +88,6 @@ class PurePursuit(Node):
         self.__transform_buffer = Buffer()
         self.__transform_listener = TransformListener(buffer=self.__transform_buffer, node=self)
 
-    def __get_next_target_point(self, 
-                                current_pose: PoseWithCovarianceStamped, 
-                                path: Path) -> Pose:
-        """Function that will take the robot's current pose in the map frame and
-        determine what the next target point should be.
-
-        Specifically, this implementation looks at which point in the path array
-        is closest the lookahead distance away from the vehicle sequentially
-        after the point that is currently closest to the car.
-
-        Args:
-            current_pose (PoseStamped): The robot's current pose in the map
-            frame / w.r.t. the map frame.
-            path (Path): A sequence of robot poses, each with respect to the map
-            frame as well.
-
-        Returns:
-            Pose: The point in the path chosen as the next target point.
-        """
-        # Create a vectorized version of the (x,y) positions in the path using
-        # numpy.
-        poses = np.array(path.poses)
-
-        # Apply a euclidean distance elementwise across the vector of (x,y) path
-        # positions.
-
-        # Find the point that is closest to the current pose. We'll start our
-        # search for the point closest to the lookahead distance from this
-        # point.
-        
-        pass
-
     def transform_target_to_vehicle_frame(self, target_point):
         pass
         # Maybe this function would subscribe to tf? Need to identify the normal
@@ -147,14 +119,29 @@ class PurePursuit(Node):
             newest_path = deepcopy(self.__path)
         with self.__pose_lock:
             newest_pose = deepcopy(self.__pose)
-
-        target_point = self.__get_next_target_point(current_pose=newest_pose,
-                                                    path=newest_path)
+        
+        if newest_path is None:
+            return
+        # Determine what the next target point should be based on the car's
+        # current pose relative to the map and the path in the map.
+        # NOTE: The desired path waypoint Pose is returned, but for now, we're
+        # only really interested in the (x,y) position inside.
+        target_pose = get_next_target_point(current_pose=newest_pose, 
+                                            path=newest_path,
+                                            lookahead_distance_m=self.__lookahead_distance_m)
+        # TODO: NOTE: MAY HAVE TO UPDATE TIMESTAMP OF TARGET POSE so that we get
+        # the transform of the pose to the base_link at the time this callback
+        # was called?
+        # TODO: Publish position Point derived from target_pose to this node's
+        # target_pose publisher.
 
         # TODO: transform goal point to vehicle frame of reference
+        target_pose_in_car_frame = self.__transform_buffer.transform(object_stamped=target_pose,
+                                                                     target_frame=self.__car_frame)
 
 
         # TODO: calculate curvature/steering angle
+
 
         # TODO: publish drive message, don't forget to limit the steering angle.
 

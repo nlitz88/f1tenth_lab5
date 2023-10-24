@@ -18,7 +18,7 @@ class PathFilePublisher2D(Node):
         self.declare_parameters(
             namespace="",
             parameters=[
-                ("filepath", filepath)
+                ("filepath", filepath),
                 ("frame_id", "map")
             ],
             ignore_override=False
@@ -30,7 +30,9 @@ class PathFilePublisher2D(Node):
         # specified filepath. If able to load the file, create a "Path" object
         # from the sequence of points.
         try:
-            self.__path = generate_path_from_file(filepath=self.__filepath, frame_id=self.__frame_id)
+            self.__path = generate_path_from_file(filepath=self.__filepath,
+                                                  stamp=self.get_clock().now(),
+                                                  frame_id=self.__frame_id)
         except OSError as exc:
             self.get_logger().error(f"Failed to open path file {self.__filepath}")
             raise exc
