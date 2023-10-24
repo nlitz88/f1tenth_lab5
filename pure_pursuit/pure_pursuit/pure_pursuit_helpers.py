@@ -252,4 +252,4 @@ def compute_steering_angle(target_point_y: float, lookahead_distance_m: float) -
         float: The steering angle that will cause the vehicle to steer with a
         curvature that will pass through the target point.
     """
-    return 2.0*np.abs(target_point_y)/(lookahead_distance_m**2)
+    return 2.0*target_point_y/(lookahead_distance_m**2)

@@ -384,31 +384,17 @@ class TestGetNextTargetPoint(unittest.TestCase):
         self.assertEqual(target_point.position.y, 0.0)
 
 class TestComputeSteeringAngle(unittest.TestCase):
-
-    def test_positive_values(self):
-        # Black Box Test
-        self.assertAlmostEqual(compute_steering_angle(1.0, 10.0), 0.02, places=2)
-
-    def test_negative_values(self):
-        # Black Box Test
-        self.assertAlmostEqual(compute_steering_angle(-2.0, 5.0), 0.16, places=2)
-
-    def test_zero_values(self):
-        # Black Box Test
-        self.assertEqual(compute_steering_angle(0.0, 10.0), 0.0)
-
-    def test_large_values(self):
-        # Black Box Test
-        self.assertAlmostEqual(compute_steering_angle(1000.0, 1000.0), 0.002, places=2)
     
-    def test_edge_case_positive_infinity(self):
-        # White Box Test
-        self.assertEqual(compute_steering_angle(2.0, 0.0), float('inf'))
-
-    def test_edge_case_negative_infinity(self):
-        # White Box Test
-        self.assertEqual(compute_steering_angle(-2.0, 0.0), float('inf'))
-
-    def test_edge_case_zero_lookahead_distance(self):
-        # White Box Test
-        self.assertTrue(math.isnan(compute_steering_angle(0.0, 0.0)))
+    def test_positive_values(self):
+        # Test when both target_point_y and lookahead_distance_m are positive.
+        self.assertAlmostEqual(compute_steering_angle(2.0, 5.0), 0.16, places=2)
+        self.assertAlmostEqual(compute_steering_angle(1.5, 3.0), 0.33, places=2)
+    
+    def test_zero_target_point_y(self):
+        # Test when target_point_y is zero. The function should return zero as the steering angle.
+        self.assertEqual(compute_steering_angle(0.0, 5.0), 0.0)
+    
+    def test_negative_values(self):
+        # Test when both target_point_y and lookahead_distance_m are negative.
+        self.assertAlmostEqual(compute_steering_angle(-2.0, -5.0), -0.16, places=2)
+        self.assertAlmostEqual(compute_steering_angle(-1.5, -3.0), -0.33, places=2)

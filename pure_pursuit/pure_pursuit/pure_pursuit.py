@@ -26,7 +26,7 @@ class PurePursuit(Node):
         self.declare_parameters(namespace="",
                                 parameters=[
                                     ("lookahead_distance_m", rclpy.Parameter.Type.DOUBLE),
-                                    ("longitudinal_velocity_ms", rclpy.Parameter.Type.DOUBLE)
+                                    ("longitudinal_velocity_ms", rclpy.Parameter.Type.DOUBLE),
                                     ("max_longitudinal_velocity_ms", rclpy.Parameter.Type.DOUBLE),
                                     ("min_longitudinal_velocity_ms", rclpy.Parameter.Type.DOUBLE),
                                     ("controller_frequency_hz", 100),
