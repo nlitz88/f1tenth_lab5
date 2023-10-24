@@ -3,8 +3,6 @@ import numpy as np
 from nav_msgs.msg import Path
 from geometry_msgs.msg import Pose, PoseWithCovarianceStamped
 
-
-
 def numpy_array_from_path(path: Path) -> np.ndarray:
     """Takes a Path object and returns a 2D numpy array 
 
@@ -67,6 +65,19 @@ def subtract_lookahead_distance(lookahead_distance_m: float, distances_m: np.nda
     """
     return np.subtract(distances_m, lookahead_distance_m)
 
+def find_smallest_past_index(distances_m: np.ndarray, starting_index: int) -> int:
+    """Returns the index of the smallest element in the array of distances
+    AFTER the starting index. I.e., not including the starting index.
+
+    Args:
+        distances_m (np.ndarray): Array of distance values.
+        after_index (int): Index that search for smallest will begin after.
+
+    Returns:
+        int: Index of the smallest element that comes after the starting_index.
+    """
+    return np.argmin()
+
 
 # NOTE: This function is like the integration of each step / smaller function.
 # So, if we can test each function separately and independently verify each
@@ -101,5 +112,76 @@ def get_next_target_point(current_pose: PoseWithCovarianceStamped,
     # Find the point that is closest to the current pose. We'll start our
     # search for the point closest to the lookahead distance from this
     # point.
+
+    # NOTE: Could stop here. In the simplest implementation of pure pursuit
+    # (I.e., I think the approach taken in the original paper), the closest
+    # point is used as the next target point. SO, if all else fails, could take
+    # the index found as the smallest at this point and use that point as the
+    # next target.
+
+    # Next, to improve our controller, we want to find which point AFTER the
+    # closest point in our path (sequentially) is the closest to being one
+    # lookahead distance away from the car.
+    # 
+    # To do this, first get a view of the path with only the elements of the
+    # path that come after the point closest to the car.
+
+    # Next, subtract the lookahead distance from each of these
+    # points--"normalizing" them.
+
+    # Finally, select the point with the smallest value among them--this is the
+    # node whose distance is closest to one lookahead distance away.
+
+
+    # NOTE: Other potential problems I'm thinking of:
+    # 1. Our path is a loop, really. Therefore, if at the start of the path,
+    #    could find that the point behind our car (the last point in the path)
+    #    is closer to one lookahead distance than points "in front of" the
+    #    vehicle. I.e., we'd prefer our car to pick the target that's in front
+    #    of it.
+    #   POSSIBLE SOLUTION: Could I filter out points that aren't > than +/- 90
+    #   degrees from the x-axis of the car?
+    #   NOTE: I think it's worth trying to implement this without taking this
+    #   into account first and seeing how it works. If it's a problem, then I
+    #   can try this addition to fix things.
+
+    # 2. Our path is a loop--but the path list ends. Therefore, when we're at
+    #    the end of the path, how do we get it to see the waypoints in front of
+    #    it at the beginning of the path?
+    #   POSSIBLE SOLUTION: Could build a custom interface around the path list
+    #   so that the path list is reconstructed with the closest point being the
+    #   first element in this new list, and the point behind it sequentially in
+    #   the original list would be at the end of this new path list or view.
+    #   NOTE: This may be unique to racing, as the path is a loop. However,
+    #   check to see if this is addressed in the paper. I feel like it would
+    #   almost have to be addressed.
+    #   TODO: OR, consider making the path publisher node aware of the car's
+    #   position in the map, and (like a real path planning node would) publish
+    #   a new path with the starting point at its current position. I feel like
+    #   this is the "most" correct way of doing this, as a path planner is
+    #   constantly updating its path to get from some pose to the goal pose.
+    #   However, I guess the only difference is that we're constantly moving the
+    #   goal pose around the track? (I.e., like it would be chasing its tail).
+
+    #   NOTE: Just to reiterate though: I feel like I kind of need to do it the
+    #   way I'm describing here, as the pure pursuit node itself shouldn't
+    #   really be concerned with the path. It should just be worried about
+    #   getting to the next target point ALONG THE PATH IT CURRENTLY HAS. That's
+    #   it. ESPECIALLY because the end of the path and the beginning of it
+    #   connecting is a special case--that's not necessarily normal--and I don't
+    #   think it's in scope.
+    #   TODO: Vamping on this idea: I think it would be the role of a
+    #   "behaviorial planner" node specifically for this car/application that
+    #   would be responsible for changing the goal waypoint for the global
+    #   path planner--or itself implementing the logic to say "okay, the car has
+    #   reached the last waypoint of the track global path--time to move its
+    #   local planner's goal node back to the first point in the original path!"
+    #   Upon the goal point changing, that's when the global planner reroutes or
+    #   replans. Check if there's a ROS REP that specifies how this should work.
+    #   Also, the behavioral planner could be implemented in a stateful way such
+    #   that if it's in "race" state, it just updates that goal pose to keep the
+    #   car with a planned path around the track, but if a button is pressed to
+    #   finish the race or something, then it could place the goal pose right
+    #   after the finish line and stop right after that, for instance.
     
     pass
