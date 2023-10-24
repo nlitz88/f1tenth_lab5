@@ -164,13 +164,13 @@ def get_next_target_point(current_pose: PoseWithCovarianceStamped,
     # original paper, they include this point. Maybe the rule should be that the
     # lookahead distance needs to be > than the largest euclidean distance
     # between consecutive points?
-    distances_after_closest_m = get_distances_starting_at_index(distances=distances, 
-                                                                index=closest_index)
+    distances_starting_at_closest = get_distances_starting_at_index(distances=distances, 
+                                                                    index=closest_index)
 
     # Next, subtract the lookahead distance from each of these
     # points--"normalizing" them.
     normalized_distances_m = normalize_distances(lookahead_distance_m=lookahead_distance_m,
-                                                 distances_m=distances_after_closest_m)
+                                                 distances_m=distances_starting_at_closest)
 
     # Finally, select the point with the smallest value among them--this is the
     # node whose distance is closest to one lookahead distance away.
