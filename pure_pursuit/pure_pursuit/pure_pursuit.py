@@ -10,6 +10,7 @@ from geometry_msgs.msg import PointStamped, PoseWithCovarianceStamped, PoseStamp
 from tf2_ros.transform_listener import TransformListener
 from tf2_ros.buffer import Buffer
 from copy import deepcopy
+from tf2_geometry_msgs import tf2_geometry_msgs
 
 from pure_pursuit.pure_pursuit_helpers import get_next_target_point, compute_steering_angle
 
@@ -25,6 +26,7 @@ class PurePursuit(Node):
         self.declare_parameters(namespace="",
                                 parameters=[
                                     ("lookahead_distance_m", rclpy.Parameter.Type.DOUBLE),
+                                    ("longitudinal_velocity_ms", rclpy.Parameter.Type.DOUBLE)
                                     ("max_longitudinal_velocity_ms", rclpy.Parameter.Type.DOUBLE),
                                     ("min_longitudinal_velocity_ms", rclpy.Parameter.Type.DOUBLE),
                                     ("controller_frequency_hz", 100),
@@ -37,6 +39,7 @@ class PurePursuit(Node):
         # Grab values of parameters for local use after being declared.
         # TODO: Need to set up a parameter update callback function.
         self.__lookahead_distance_m = self.get_parameter("lookahead_distance_m").value
+        self.__longitudinal_velocity_ms = self.get_parameter("longitudinal_velocity_ms").value
         self.__max_longitudinal_velocity_ms = self.get_parameter("max_longitudinal_velocity_ms").value
         self.__min_longitudinal_velocity_ms = self.get_parameter("min_longitudinal_velocity_ms").value
         self.__controller_frequency = self.get_parameter("controller_frequency_hz").value
@@ -169,10 +172,15 @@ class PurePursuit(Node):
         # transformed point.
         # target_pose_in_car_frame: PoseStamped = self.__transform_buffer.transform(object_stamped=target_pose,
         #                                                              target_frame=self.__car_frame)
-
+        map_baselink_transform = self.__transform_buffer.lookup_transform(source_frame=self.__map_frame,
+                                                                          target_frame=self.__car_frame,
+                                                                          time=Time())
+        target_pose_in_car_frame = tf2_geometry_msgs.do_transform_pose(pose=target_pose.pose,
+                                                                       transform=map_baselink_transform)
 
         # TODO: calculate curvature/steering angle
-        # steering_angle_rad = compute_steering_angle(target_point_y=target_pose_in_car_frame.pose.position.y)
+        steering_angle_rad = compute_steering_angle(target_point_y=target_pose_in_car_frame.position.y, 
+                                                    lookahead_distance_m=self.__lookahead_distance_m)
 
         # Call a function to get what the velocity of the car should be. Under
         # the hood, this can be implemented using a velocity profile lookup
@@ -180,12 +188,13 @@ class PurePursuit(Node):
         # value. While velocity control isn't necessarily part of the pure
         # pursuit controller, we'll include it here in this function for
         # convenience.
-        # longitudinal_velocity_ms = get_velocity()
+        longitudinal_velocity_ms = self.__longitudinal_velocity_ms
         
-
         # TODO: publish drive message, don't forget to limit the steering angle.
+        self.__publish_drive_message(longitudinal_velocity_ms=longitudinal_velocity_ms,
+                                     steering_angle_rad=steering_angle_rad)
 
-        pass
+        return
 
     def __pose_callback(self, new_pose: PoseWithCovarianceStamped) -> None:
         """Callback to store the most recently received pose message.
