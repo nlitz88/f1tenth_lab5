@@ -1,4 +1,5 @@
 import csv
+import math
 from pure_pursuit.pure_pursuit import *
 from pure_pursuit.pure_pursuit_helpers import *
 from pure_pursuit.path_publisher_helpers import generate_path_from_file
@@ -381,3 +382,33 @@ class TestGetNextTargetPoint(unittest.TestCase):
         # The expected result is a point approximately 30 units ahead of the current pose.
         self.assertAlmostEqual(target_point.position.x, 40.0, delta=0.01)
         self.assertEqual(target_point.position.y, 0.0)
+
+class TestComputeSteeringAngle(unittest.TestCase):
+
+    def test_positive_values(self):
+        # Black Box Test
+        self.assertAlmostEqual(compute_steering_angle(1.0, 10.0), 0.02, places=2)
+
+    def test_negative_values(self):
+        # Black Box Test
+        self.assertAlmostEqual(compute_steering_angle(-2.0, 5.0), 0.16, places=2)
+
+    def test_zero_values(self):
+        # Black Box Test
+        self.assertEqual(compute_steering_angle(0.0, 10.0), 0.0)
+
+    def test_large_values(self):
+        # Black Box Test
+        self.assertAlmostEqual(compute_steering_angle(1000.0, 1000.0), 0.002, places=2)
+    
+    def test_edge_case_positive_infinity(self):
+        # White Box Test
+        self.assertEqual(compute_steering_angle(2.0, 0.0), float('inf'))
+
+    def test_edge_case_negative_infinity(self):
+        # White Box Test
+        self.assertEqual(compute_steering_angle(-2.0, 0.0), float('inf'))
+
+    def test_edge_case_zero_lookahead_distance(self):
+        # White Box Test
+        self.assertTrue(math.isnan(compute_steering_angle(0.0, 0.0)))

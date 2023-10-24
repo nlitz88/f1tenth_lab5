@@ -6,7 +6,7 @@ from rclpy.time import Time
 import numpy as np
 from ackermann_msgs.msg import AckermannDriveStamped
 from nav_msgs.msg import Path
-from geometry_msgs.msg import Pose, PoseWithCovarianceStamped
+from geometry_msgs.msg import PointStamped, PoseWithCovarianceStamped, PoseStamped
 from tf2_ros.transform_listener import TransformListener
 from tf2_ros.buffer import Buffer
 from copy import deepcopy
@@ -75,6 +75,11 @@ class PurePursuit(Node):
         self.__path: Path = None
         self.__path_lock = Lock()
 
+        # Create publisher for pure pursuit's current target_pose.
+        self.__target_point_publisher = self.create_publisher(msg_type=PointStamped, 
+                                                              topic="target_point",
+                                                              qos_profile=10)
+
         # Create a drive publisher to command the resulting drive values.
         # TODO: May have to update this topic (and a number of other things)
         # depending on how these namespaces work.
@@ -105,6 +110,21 @@ class PurePursuit(Node):
     def publish_drive_message(self, velocity, steering_angle):
         pass
 
+    def __publish_target_pose(self, target_pose: PoseStamped) -> None:
+        """Publish the target pose as a PointStamped via the
+        target_point_publisher.
+
+        Args:
+            target_pose (PoseStamped): The pose that the 2D PointStamped will be
+            derived from.
+        """
+        target_point = PointStamped()
+        target_point.header.frame_id = self.__map_frame
+        target_point.header.stamp = self.get_clock().now().to_msg()
+        target_point.point.x = target_pose.pose.position.x
+        target_point.point.y = target_pose.pose.position.y
+        self.__target_point_publisher.publish(target_point)
+
     def __control_callback(self) -> None:
 
         # TODO: find the current waypoint to track using methods mentioned in
@@ -120,7 +140,7 @@ class PurePursuit(Node):
         with self.__pose_lock:
             newest_pose = deepcopy(self.__pose)
         
-        if newest_path is None:
+        if newest_path is None or newest_pose is None:
             return
         # Determine what the next target point should be based on the car's
         # current pose relative to the map and the path in the map.
@@ -132,15 +152,27 @@ class PurePursuit(Node):
         # TODO: NOTE: MAY HAVE TO UPDATE TIMESTAMP OF TARGET POSE so that we get
         # the transform of the pose to the base_link at the time this callback
         # was called?
-        # TODO: Publish position Point derived from target_pose to this node's
-        # target_pose publisher.
+        # Publish position Point derived from target_pose to this node's
+        # target_point publisher.
+        self.__publish_target_pose(target_pose=target_pose)
 
         # TODO: transform goal point to vehicle frame of reference
+        # NOTE: Okay, it doesn't look like the transform function works out of
+        # the box for the latest on foxy. However, I think the functions to
+        # actually perform the transform DO exist.
+        # May be able to use those underlying functions--but I have a feeling
+        # I'll need to manually install a newer version of pykdl or something
+        # like that.
+        # TODO: Work on this after the peer review. This is in the critical
+        # path. Until I'm done preparing for the peer review, write and unit
+        # test the function that computes the steering angle once we have that
+        # transformed point.
         target_pose_in_car_frame = self.__transform_buffer.transform(object_stamped=target_pose,
                                                                      target_frame=self.__car_frame)
 
 
         # TODO: calculate curvature/steering angle
+
 
 
         # TODO: publish drive message, don't forget to limit the steering angle.

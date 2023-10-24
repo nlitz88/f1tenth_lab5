@@ -7,12 +7,13 @@ def numpy_array_from_path(path: Path) -> np.ndarray:
     """Takes a Path object and returns a 2D numpy array 
 
     Args:
-        path (Path): _description_
+        path (Path): Collection of PoseStamped pose that form a path.
 
     Returns:
-        np.ndarray: _description_
+        np.ndarray: A numpy array of 2D positions derived from the Poses of the
+        provided path.
     """
-    return np.array([[float(pose.position.x), float(pose.position.y)] for pose in path.poses])
+    return np.array([[float(pose.pose.position.x), float(pose.pose.position.y)] for pose in path.poses])
 
 def numpy_position_from_pose(pose: Pose) -> np.ndarray:
     """Helper function to extract the position from the provided pose as a 1D
@@ -229,3 +230,26 @@ def get_next_target_point(current_pose: PoseWithCovarianceStamped,
     #   car with a planned path around the track, but if a button is pressed to
     #   finish the race or something, then it could place the goal pose right
     #   after the finish line and stop right after that, for instance.
+
+
+# Can make a wrapper around this steering angle function that accepts a ose and
+# abstracts it away. That way, the underlying function remains the same and can
+# be tested all on its own with its fundamental pieces, and different wrappers
+# can be made to accept different input types. I.e., translation layers.
+
+def compute_steering_angle(target_point_y: float, lookahead_distance_m: float) -> float:
+    """Computes the steering angle to steer with a curvature that will intersect
+    the target point with the provided y coordinate and with the provided
+    lookahead distance.
+
+    Args:
+        target_point_y (float): The y-component of the target point that the
+        computed steering angle should cause us to steer through.
+        lookahead_distance_m (float): The lookahead distance of the pure pursuit
+        controller (meters).
+
+    Returns:
+        float: The steering angle that will cause the vehicle to steer with a
+        curvature that will pass through the target point.
+    """
+    return 2.0*np.abs(target_point_y)/(lookahead_distance_m**2)
