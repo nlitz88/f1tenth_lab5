@@ -93,24 +93,24 @@ class PurePursuit(Node):
         self.__transform_buffer = Buffer()
         self.__transform_listener = TransformListener(buffer=self.__transform_buffer, node=self)
 
-    def transform_target_to_vehicle_frame(self, target_point):
-        pass
-        # Maybe this function would subscribe to tf? Need to identify the normal
-        # way to accomplish this part. Do you subscribe asynchronously? Or do
-        # you get it as a service?
-        # Just get it via doing a lookup on the transform buffer--this function
-        # abstracts away all the computation for you.
 
-    def get_steering_angle_to_target(self, target_point_vframe):
-        pass
+    def __publish_drive_message(self, longitudinal_velocity_ms: float, 
+                                steering_angle_rad: float) -> None:
+        """Publishes a drive message with the provided velocity and steering
+        angle.
 
-    def get_current_velocity(self, vehicle_position_in_map):
-        pass
+        Args:
+            longitudinal_velocity_ms (float): Longitudinal velocity in m/s to be
+            commanded to the car.
+            steering_angle_rad (float): Steering angle in radians to be
+            commanded to the car.
+        """
+        new_drive_message = AckermannDriveStamped()
+        new_drive_message.drive.speed = longitudinal_velocity_ms
+        new_drive_message.drive.steering_angle = steering_angle_rad
+        self.__drive_publisher.publish(new_drive_message)
 
-    def publish_drive_message(self, velocity, steering_angle):
-        pass
-
-    def __publish_target_pose(self, target_pose: PoseStamped) -> None:
+    def __publish_target_point(self, target_pose: PoseStamped) -> None:
         """Publish the target pose as a PointStamped via the
         target_point_publisher.
 
@@ -154,7 +154,7 @@ class PurePursuit(Node):
         # was called?
         # Publish position Point derived from target_pose to this node's
         # target_point publisher.
-        self.__publish_target_pose(target_pose=target_pose)
+        self.__publish_target_point(target_pose=target_pose)
 
         # TODO: transform goal point to vehicle frame of reference
         # NOTE: Okay, it doesn't look like the transform function works out of
@@ -167,13 +167,21 @@ class PurePursuit(Node):
         # path. Until I'm done preparing for the peer review, write and unit
         # test the function that computes the steering angle once we have that
         # transformed point.
-        target_pose_in_car_frame: PoseStamped = self.__transform_buffer.transform(object_stamped=target_pose,
-                                                                     target_frame=self.__car_frame)
+        # target_pose_in_car_frame: PoseStamped = self.__transform_buffer.transform(object_stamped=target_pose,
+        #                                                              target_frame=self.__car_frame)
 
 
         # TODO: calculate curvature/steering angle
-        steering_angle = compute_steering_angle(target_point_y=target_pose_in_car_frame.pose.position.y)
+        # steering_angle_rad = compute_steering_angle(target_point_y=target_pose_in_car_frame.pose.position.y)
 
+        # Call a function to get what the velocity of the car should be. Under
+        # the hood, this can be implemented using a velocity profile lookup
+        # table, some sort of function, or literally just returning a constant
+        # value. While velocity control isn't necessarily part of the pure
+        # pursuit controller, we'll include it here in this function for
+        # convenience.
+        # longitudinal_velocity_ms = get_velocity()
+        
 
         # TODO: publish drive message, don't forget to limit the steering angle.
 
