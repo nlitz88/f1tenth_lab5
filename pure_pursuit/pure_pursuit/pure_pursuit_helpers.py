@@ -77,35 +77,35 @@ def subtract_lookahead_distance(lookahead_distance_m: float, distances_m: np.nda
     """
     return np.subtract(distances_m, lookahead_distance_m)
 
-def get_points_after_index(numpy_path: np.ndarray, index: int) -> np.ndarray:
-    """Returns a view (slice) of the provided numpy_path starting at one past
-    the provided index. I.e., all the elements in the numpy_path after the
+def get_distances_after_index(distances: np.ndarray, index: int) -> np.ndarray:
+    """Returns a view (slice) of the provided distances starting at one past
+    the provided index. I.e., all the elements in the distances after the
     element at index (not including the element at index).
 
     Args:
-        numpy_path (np.ndarray): The array of 2D points representing a path.
+        numpy_path (np.ndarray): The array of distances.
         index (int): The index that the slice/view will start immediately after.
 
     Returns:
-        np.ndarray: The array of elements in numpy_path sequentially
-        beyond/after the provided index.
+        np.ndarray: The array of elements in distances sequentially beyond/after
+        the provided index.
     """
-    return numpy_path[index+1:]
+    return distances[index+1:]
     
 
+def get_smallest_index(numpy_path: np.ndarray) -> int:
+    """Returns the index of the smallest element in the provided path. Note that
+    if there are identical elements that are both the smallest, this returns the
+    index of the first instance of that smallest value.
 
-# def find_smallest_past_index(distances_m: np.ndarray, starting_index: int) -> int:
-#     """Returns the index of the smallest element in the array of distances
-#     AFTER the starting index. I.e., not including the starting index.
+    Args:
+        numpy_path (np.ndarray): The ndarray of waypoints the smallest will be
+        found in.
 
-#     Args:
-#         distances_m (np.ndarray): Array of distance values.
-#         after_index (int): Index that search for smallest will begin after.
-
-#     Returns:
-#         int: Index of the smallest element that comes after the starting_index.
-#     """
-#     return np.argmin()
+    Returns:
+        int: The index of the smallest element found.
+    """
+    return np.argmin(numpy_path)
 
 
 # NOTE: This function is like the integration of each step / smaller function.

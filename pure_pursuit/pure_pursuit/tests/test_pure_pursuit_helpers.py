@@ -177,17 +177,17 @@ class TestSubtractLookaheadDistance(unittest.TestCase):
         result = subtract_lookahead_distance(lookahead_distance, distances)
         np.testing.assert_array_almost_equal(result, expected_result, decimal=6)
 
-class TestGetPointsAfterIndex(unittest.TestCase):
+class TestGetDistancesAfterIndex(unittest.TestCase):
 
-    def test_get_points_after_index(self):
+    def test_get_distances_after_index(self):
         # Create a numpy array representing a path
         numpy_path = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]])
 
-        # Specify the index from which you want the points after
+        # Specify the index from which you want the distances after
         index = 2
 
         # Call the function
-        result = get_points_after_index(numpy_path, index)
+        result = get_distances_after_index(numpy_path, index)
 
         # Define the expected result as a numpy array
         expected_result = np.array([[7, 8], [9, 10]])
@@ -195,29 +195,63 @@ class TestGetPointsAfterIndex(unittest.TestCase):
         # Assert that the result matches the expected result
         np.testing.assert_array_equal(result, expected_result)
 
-    def test_get_points_after_index_empty_array(self):
+    def test_get_distances_after_index_empty_array(self):
         numpy_path = np.array([])
         index = 0
-        result = get_points_after_index(numpy_path, index)
+        result = get_distances_after_index(numpy_path, index)
         expected_result = np.array([])
         np.testing.assert_array_equal(result, expected_result)
     
-    def test_get_points_after_index_end_of_array(self):
+    def test_get_distances_after_index_end_of_array(self):
         numpy_path = np.array([[1, 2], [3, 4], [5, 6]])
         index = len(numpy_path) - 1
-        result = get_points_after_index(numpy_path, index)
+        result = get_distances_after_index(numpy_path, index)
         expected_result = np.empty(shape=(0,2))
         np.testing.assert_array_equal(result, expected_result) 
 
-    def test_get_points_after_index_negative_index(self):
+    def test_get_distances_after_index_negative_index(self):
         numpy_path = np.array([[1, 2], [3, 4], [5, 6]])
         index = -1
-        result = get_points_after_index(numpy_path, index)
+        result = get_distances_after_index(numpy_path, index)
         expected_result = np.array([[1, 2], [3, 4], [5, 6]])
         np.testing.assert_array_equal(result, expected_result)
 
-    def test_get_points_after_index_index_out_of_bounds(self):
+    def test_get_distances_after_index_index_out_of_bounds(self):
         numpy_path = np.array([[1, 2], [3, 4], [5, 6]])
         index = 5
-        result = get_points_after_index(numpy_path, index)
+        result = get_distances_after_index(numpy_path, index)
         self.assertEqual(len(result), 0)
+
+class TestGetSmallestIndex(unittest.TestCase):
+
+    def test_get_smallest_index(self):
+        # Create a numpy array representing waypoints
+        numpy_path = np.array([3, 1, 4, 1, 5, 9, 2])
+
+        # Call the function
+        result = get_smallest_index(numpy_path)
+
+        # Define the expected result
+        expected_result = 1  # The smallest element (1) first appears at index 1
+
+        # Assert that the result matches the expected result
+        self.assertEqual(result, expected_result)
+
+    def test_get_smallest_index_identical_elements(self):
+        # Create a numpy array with identical smallest elements
+        numpy_path = np.array([2, 2, 2, 2, 2])
+
+        # Call the function
+        result = get_smallest_index(numpy_path)
+
+        # Define the expected result
+        expected_result = 0  # The smallest element (2) first appears at index 0
+
+        # Assert that the result matches the expected result
+        self.assertEqual(result, expected_result)
+
+    def test_get_smallest_index_empty_array(self):
+        # Test with an empty input array
+        numpy_path = np.array([])
+        with self.assertRaises(ValueError):
+            get_smallest_index(numpy_path)
