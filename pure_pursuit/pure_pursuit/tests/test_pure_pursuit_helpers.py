@@ -176,3 +176,48 @@ class TestSubtractLookaheadDistance(unittest.TestCase):
         expected_result = np.array([-5.0, -6.0, -7.0, -8.0])
         result = subtract_lookahead_distance(lookahead_distance, distances)
         np.testing.assert_array_almost_equal(result, expected_result, decimal=6)
+
+class TestGetPointsAfterIndex(unittest.TestCase):
+
+    def test_get_points_after_index(self):
+        # Create a numpy array representing a path
+        numpy_path = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]])
+
+        # Specify the index from which you want the points after
+        index = 2
+
+        # Call the function
+        result = get_points_after_index(numpy_path, index)
+
+        # Define the expected result as a numpy array
+        expected_result = np.array([[7, 8], [9, 10]])
+
+        # Assert that the result matches the expected result
+        np.testing.assert_array_equal(result, expected_result)
+
+    def test_get_points_after_index_empty_array(self):
+        numpy_path = np.array([])
+        index = 0
+        result = get_points_after_index(numpy_path, index)
+        expected_result = np.array([])
+        np.testing.assert_array_equal(result, expected_result)
+    
+    def test_get_points_after_index_end_of_array(self):
+        numpy_path = np.array([[1, 2], [3, 4], [5, 6]])
+        index = len(numpy_path) - 1
+        result = get_points_after_index(numpy_path, index)
+        expected_result = np.empty(shape=(0,2))
+        np.testing.assert_array_equal(result, expected_result) 
+
+    def test_get_points_after_index_negative_index(self):
+        numpy_path = np.array([[1, 2], [3, 4], [5, 6]])
+        index = -1
+        result = get_points_after_index(numpy_path, index)
+        expected_result = np.array([[1, 2], [3, 4], [5, 6]])
+        np.testing.assert_array_equal(result, expected_result)
+
+    def test_get_points_after_index_index_out_of_bounds(self):
+        numpy_path = np.array([[1, 2], [3, 4], [5, 6]])
+        index = 5
+        result = get_points_after_index(numpy_path, index)
+        self.assertEqual(len(result), 0)
