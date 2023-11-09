@@ -55,4 +55,6 @@ To visualize the list of waypoints you have, and to visualize the current waypoi
 
 - **Deliverable 1**: [ai_makerspace.pmg](./pure_pursuit/maps/ai_makerspace.pgm) [ai_makerspace.yaml](./pure_pursuit/maps/ai_makerspace.yaml)
 - **Deliervable 2**: This repo
-- **Deliervable 3**: [Pure Pursuit Node Running in Simulation](https://www.youtube.com/watch?v=zkDNg6LVbwA)
+- **Deliervable 3**: [Pure Pursuit Node Running in
+  Simulation](https://youtu.be/zkDNg6LVbwA) [Pure Pursuit Node
+  running on Car in AI Maker Space](https://youtu.be/7BYTGJmcAY0)

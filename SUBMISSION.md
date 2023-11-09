@@ -1,4 +1,5 @@
-# Lab 6: SLAM and Pure Pursuit
+# Lab 5: SLAM and Pure Pursuit
 
-## YouTube video link
-[FILL ME IN](https://tinyurl.com/22mts2ax)
+# YouTube Video Links
+[SLAM and Pure Pursuit Simulation Demo Video](https://youtu.be/zkDNg6LVbwA)
+[SLAM and Pure Pursuit Vehicle Demo Video](https://youtu.be/7BYTGJmcAY0)
